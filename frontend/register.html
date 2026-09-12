@@ -728,7 +728,7 @@
 
       if (res.ok) {
         const isFile = window.location.protocol === 'file:';
-        window.location.href = (isFile ? 'login.html' : '/login.html') + '?registered=1';
+        window.location.href = isFile ? 'pages/dashboard.html' : '/pages/dashboard.html';
       } else {
         showBannerError(res.error);
       }
