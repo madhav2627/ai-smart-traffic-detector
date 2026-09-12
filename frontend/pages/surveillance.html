@@ -44,9 +44,13 @@
             <div id="file-name" class="font-medium truncate" style="font-size:0.9rem"></div>
             <div id="file-size" class="text-xs text-muted" style="margin-top:2px"></div>
           </div>
-          <div style="display:flex;gap:var(--space-2)">
+          <div style="display:flex;gap:var(--space-2);flex-wrap:wrap">
             <button id="clear-file" class="btn btn-ghost btn-icon btn-sm" aria-label="Remove file">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <button id="demo-sim-btn" class="btn btn-secondary btn-sm" type="button" title="Test with simulated YOLOv11 telemetry">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Demo Simulation
             </button>
             <button id="start-analysis" class="btn btn-primary">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><polygon points="5 3 19 12 5 21 5 3"/></svg>
@@ -61,7 +65,7 @@
     <div id="processing-section" style="display:none" class="animate-fade-in">
       <div class="card" style="margin-bottom:var(--space-4)">
         <div style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-4)">
-          <div class="loading-spinner"></div>
+          <div class="loading-spinner" id="proc-spinner"></div>
           <div>
             <div class="font-semibold" id="proc-title">Processing video...</div>
             <div class="text-xs text-muted" id="proc-file"></div>
@@ -72,6 +76,21 @@
           <div class="progress-bar-fill indeterminate" id="proc-progress"></div>
         </div>
         <div class="processing-terminal" id="terminal" style="margin-top:var(--space-4)"></div>
+
+        <!-- Failure actions when backend is offline -->
+        <div id="proc-actions-wrap" style="display:none;margin-top:var(--space-4);gap:var(--space-3);flex-wrap:wrap;padding-top:var(--space-3);border-top:1px solid var(--border-subtle)">
+          <button id="run-demo-sim-btn" class="btn btn-primary btn-sm" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Run Demo Simulation Mode
+          </button>
+          <a href="settings.html" class="btn btn-secondary btn-sm">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            Settings (Connect AI Server)
+          </a>
+          <button id="proc-reset-btn" class="btn btn-ghost btn-sm" type="button">
+            Back to Upload
+          </button>
+        </div>
       </div>
     </div>
 
@@ -253,6 +272,25 @@ function initSurveillance() {
   cancelBtn.addEventListener('click', cancelAnalysis);
   newBtn.addEventListener('click', resetToUpload);
   dlBtn.addEventListener('click', downloadReport);
+
+  const demoSimBtn = document.getElementById('demo-sim-btn');
+  if (demoSimBtn) {
+    demoSimBtn.addEventListener('click', () => {
+      runDemoSimulation(currentFile ? currentFile.name : null);
+    });
+  }
+
+  const runDemoSimBtn = document.getElementById('run-demo-sim-btn');
+  if (runDemoSimBtn) {
+    runDemoSimBtn.addEventListener('click', () => {
+      runDemoSimulation(currentFile ? currentFile.name : null);
+    });
+  }
+
+  const procResetBtn = document.getElementById('proc-reset-btn');
+  if (procResetBtn) {
+    procResetBtn.addEventListener('click', resetToUpload);
+  }
 
   // Check for session or camera in URL or active processing job
   const params = new URLSearchParams(window.location.search);
@@ -502,6 +540,12 @@ function showProcessing(filename) {
   document.getElementById('processing-section').style.display = 'block';
   document.getElementById('proc-file').textContent = filename;
   document.getElementById('terminal').innerHTML = '';
+  document.getElementById('proc-title').textContent = 'Processing video...';
+  document.getElementById('proc-title').style.color = '';
+  const spinner = document.getElementById('proc-spinner');
+  if (spinner) spinner.style.display = 'block';
+  const actions = document.getElementById('proc-actions-wrap');
+  if (actions) actions.style.display = 'none';
 }
 
 function updateProcTitle(msg) {
@@ -512,7 +556,7 @@ function appendTerminalLine(msg) {
   const term = document.getElementById('terminal');
   if (!term) return;
   const line = document.createElement('div');
-  line.className = 'line' + (msg.includes('Error') || msg.includes('failed') ? ' line-error' : '') + (msg.includes('completed') ? ' line-done' : '');
+  line.className = 'line' + (msg.includes('Error') || msg.includes('failed') || msg.includes('[ERROR]') ? ' line-error' : '') + (msg.includes('completed') || msg.includes('[Complete]') ? ' line-done' : '');
   line.textContent = msg;
   term.appendChild(line);
   term.scrollTop = term.scrollHeight;
@@ -520,14 +564,109 @@ function appendTerminalLine(msg) {
 
 function showError(msg) {
   document.getElementById('upload-section').style.display = 'none';
-  document.getElementById('processing-section').style.display = 'none';
   document.getElementById('results-section').style.display = 'none';
+  document.getElementById('processing-section').style.display = 'block';
 
   appendTerminalLine('[ERROR] ' + msg);
-  document.getElementById('processing-section').style.display = 'block';
   document.getElementById('proc-title').textContent = 'Analysis failed';
   document.getElementById('proc-title').style.color = 'var(--error)';
+  const spinner = document.getElementById('proc-spinner');
+  if (spinner) spinner.style.display = 'none';
+  const actions = document.getElementById('proc-actions-wrap');
+  if (actions) actions.style.display = 'flex';
   Toast.error('Analysis failed', msg);
+}
+
+let isDemoSimulating = false;
+
+async function runDemoSimulation(filename) {
+  if (isDemoSimulating) return;
+  isDemoSimulating = true;
+
+  const targetFile = filename || (currentFile ? currentFile.name : 'surveillance_traffic_sample.mp4');
+  showProcessing(targetFile);
+  updateProcTitle('Pass 1: Detecting & tracking vehicles (Demo)...');
+  appendTerminalLine('[AI Engine] Initializing YOLOv11-S + ByteTrack (Demo Simulation Mode)...');
+
+  const steps = [
+    { delay: 600,  msg: '[Pass 1] Ingesting video stream: 1920x1080 @ 30fps' },
+    { delay: 1300, msg: '[Pass 1] Frame 0045/0900: Detected 14 vehicles (cars: 9, trucks: 2, motorbikes: 3)' },
+    { delay: 2000, msg: '[Pass 1] Frame 0180/0900: Tracking ID assignment (ByteTrack active tracks: 21)' },
+    { delay: 2700, msg: '[Pass 1] Frame 0450/0900: Peak flow detected - 28 active tracks, Speed avg: 42.4 km/h' },
+    { delay: 3400, msg: '[Pass 1] Frame 0720/0900: Downward corridor flow: 68%, Upward corridor flow: 32%' },
+    { delay: 4000, msg: '[Pass 1] Frame 0900/0900: Object tracking pass completed' },
+    { delay: 4600, msg: '[Pass 2] Rendering annotated bounding boxes and trajectory trails...' },
+    { delay: 5100, msg: '[Pass 2] Re-encoding output MP4 (H.264 / AAC) for web playback...' },
+    { delay: 5500, msg: '[Complete] Analysis successfully finalized! Generating telemetry report...' },
+  ];
+
+  for (let i = 0; i < steps.length; i++) {
+    const step = steps[i];
+    const prevDelay = i > 0 ? steps[i-1].delay : 0;
+    await new Promise(r => setTimeout(r, step.delay - prevDelay));
+    appendTerminalLine(step.msg);
+    if (i === 6) updateProcTitle('Pass 2: Rendering annotated video...');
+    if (i === 7) updateProcTitle('Encoding web-compatible video...');
+    if (i === 8) updateProcTitle('Analysis completed!');
+  }
+
+  const sid = 'demo_' + Date.now().toString(36);
+  const demoReport = {
+    session_id: sid,
+    video: targetFile,
+    timestamp: new Date().toISOString(),
+    status: 'completed',
+    video_duration: 30.0,
+    processing_time_seconds: 5.5,
+    traffic_level: 'MODERATE',
+    total_vehicles_detected: 48,
+    active_vehicles_at_end: 22,
+    vehicle_counts: {
+      car: 28,
+      motorcycle: 11,
+      auto_rickshaw: 4,
+      bus: 2,
+      truck: 3,
+      unknown: 0
+    },
+    speed: {
+      average_kmh: 43.8,
+      average_pixels_per_second: 142.6,
+      fastest_kmh: 68.2,
+      slowest_kmh: 18.5
+    },
+    direction_counts: {
+      UP: 16,
+      DOWN: 32,
+      UNKNOWN: 0
+    }
+  };
+
+  // Save to browser persistent storage for dashboard and history
+  try {
+    const uid = (typeof Auth !== 'undefined' && Auth.getUserId) ? Auth.getUserId() : 'default';
+    const histKey = `st_history_${uid}`;
+    const raw = localStorage.getItem(histKey);
+    const hist = raw ? JSON.parse(raw) : [];
+    hist.unshift({
+      sessionId: sid,
+      session_id: sid,
+      filename: targetFile,
+      date: new Date().toLocaleString(),
+      total_vehicles: 48,
+      traffic_level: 'MODERATE',
+      video_duration: 30.0,
+      report: demoReport
+    });
+    localStorage.setItem(histKey, JSON.stringify(hist));
+    localStorage.setItem(`st_report_${sid}`, JSON.stringify({ ok: true, status: 'completed', report: demoReport }));
+  } catch {}
+
+  isDemoSimulating = false;
+  currentReport = demoReport;
+  currentSessionId = sid;
+  showResults(sid, demoReport, false);
+  Toast.success('Demo Analysis Complete', 'Generated realistic traffic telemetry report.');
 }
 
 function cancelAnalysis() {
