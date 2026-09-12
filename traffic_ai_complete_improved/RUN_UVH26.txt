@@ -1,0 +1,5 @@
+1. Keep vehicle_traffic.pt in the same folder as main.py.
+2. Rename your input traffic video to video.mp4.
+3. Install: pip install -r requirements.txt
+4. Run: python main.py
+5. Start API: uvicorn api:app --host 0.0.0.0 --port 8000

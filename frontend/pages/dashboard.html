@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — SURVILLENCE TRAFFIC</title>
+  <link rel="stylesheet" href="/css/design-system.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/pages.css">
+</head>
+<body class="app-shell">
+
+<div class="app-content">
+  <main class="page-main">
+
+    <!-- Page Header -->
+    <div class="dashboard-header-row animate-fade-in">
+      <div class="dashboard-header-left">
+        <h2>Dashboard</h2>
+        <p class="text-sm text-muted dashboard-subtitle">Overview of your traffic surveillance system</p>
+        <div id="last-updated-wrap" class="dashboard-last-meta" style="display:none">
+          <span class="dot-live"></span>
+          <span id="last-updated">No analyses yet</span>
+        </div>
+      </div>
+      <div class="dashboard-header-right">
+        <a href="/pages/surveillance.html" class="btn btn-primary btn-sm dashboard-cta-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          <span>New Analysis</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="stats-grid" id="stats-grid">
+      <!-- Populated by JS -->
+      <div class="stat-card animate-fade-in delay-1">
+        <div class="stat-card-top">
+          <span class="stat-card-label">Total Analyses</span>
+          <div class="stat-card-icon" style="background:rgba(99,102,241,0.1)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2" style="width:18px;height:18px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+        </div>
+        <div class="stat-card-value" id="stat-analyses">0</div>
+        <div class="stat-card-footer">Sessions in your account</div>
+      </div>
+
+      <div class="stat-card animate-fade-in delay-2">
+        <div class="stat-card-top">
+          <span class="stat-card-label">Total Vehicles</span>
+          <div class="stat-card-icon" style="background:rgba(59,130,246,0.1)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" style="width:18px;height:18px"><path d="M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h11a2 2 0 012 2v3"/><rect x="9" y="11" width="14" height="10" rx="1"/><circle cx="12" cy="21" r="1"/><circle cx="20" cy="21" r="1"/></svg>
+          </div>
+        </div>
+        <div class="stat-card-value" id="stat-total">0</div>
+        <div class="stat-card-footer">Unique tracked vehicles</div>
+      </div>
+
+      <div class="stat-card animate-fade-in delay-2">
+        <div class="stat-card-top">
+          <span class="stat-card-label">Active Vehicles</span>
+          <div class="stat-card-icon" style="background:rgba(16,185,129,0.1)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" style="width:18px;height:18px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+        </div>
+        <div class="stat-card-value" id="stat-active">—</div>
+        <div class="stat-card-footer">At end of last analysis</div>
+      </div>
+
+      <div class="stat-card animate-fade-in delay-3">
+        <div class="stat-card-top">
+          <span class="stat-card-label">Cars</span>
+          <div class="stat-card-icon" style="background:rgba(96,165,250,0.1)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--car-color)" stroke-width="2" style="width:18px;height:18px"><path d="M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h11a2 2 0 012 2v3"/><rect x="9" y="11" width="14" height="10" rx="1"/></svg>
+          </div>
+        </div>
+        <div class="stat-card-value vc-car" id="stat-car">—</div>
+        <div class="stat-card-footer">Including hatchback, sedan, SUV</div>
+      </div>
+
+      <div class="stat-card animate-fade-in delay-4">
+        <div class="stat-card-top">
+          <span class="stat-card-label">Motorcycles</span>
+          <div class="stat-card-icon" style="background:rgba(52,211,153,0.1)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--motorcycle-color)" stroke-width="2" style="width:18px;height:18px"><circle cx="5" cy="17" r="3"/><circle cx="19" cy="17" r="3"/><path d="M15 6h-5l-1 4 5 1"/><path d="M9 10l-4 7"/></svg>
+          </div>
+        </div>
+        <div class="stat-card-value vc-motorcycle" id="stat-moto">—</div>
+        <div class="stat-card-footer">Two-wheelers</div>
+      </div>
+
+      <div class="stat-card animate-fade-in delay-5">
+        <div class="stat-card-top">
+          <span class="stat-card-label">Autos</span>
+          <div class="stat-card-icon" style="background:rgba(251,146,60,0.1)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--auto-color)" stroke-width="2" style="width:18px;height:18px"><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M12 3l2 6H5l2-6h5z"/><path d="M5 9l2 8"/><path d="M19 9l-2 8"/></svg>
+          </div>
+        </div>
+        <div class="stat-card-value vc-auto" id="stat-auto">—</div>
+        <div class="stat-card-footer">Three-wheelers / Auto-rickshaws</div>
+      </div>
+
+      <div class="stat-card animate-fade-in delay-6">
+        <div class="stat-card-top">
+          <span class="stat-card-label">Buses</span>
+          <div class="stat-card-icon" style="background:rgba(167,139,250,0.1)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--bus-color)" stroke-width="2" style="width:18px;height:18px"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M7 5v14"/><circle cx="6" cy="19" r="1"/><circle cx="18" cy="19" r="1"/></svg>
+          </div>
+        </div>
+        <div class="stat-card-value vc-bus" id="stat-bus">—</div>
+        <div class="stat-card-footer">Bus &amp; mini-bus</div>
+      </div>
+
+      <div class="stat-card animate-fade-in delay-7">
+        <div class="stat-card-top">
+          <span class="stat-card-label">Trucks</span>
+          <div class="stat-card-icon" style="background:rgba(244,114,182,0.1)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--truck-color)" stroke-width="2" style="width:18px;height:18px"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+          </div>
+        </div>
+        <div class="stat-card-value vc-truck" id="stat-truck">—</div>
+        <div class="stat-card-footer">Truck &amp; LCV</div>
+      </div>
+    </div>
+
+    <!-- Main content grid -->
+    <div class="content-grid">
+      <!-- Left column -->
+      <div style="display:flex;flex-direction:column;gap:var(--space-5)">
+
+        <!-- Vehicle Distribution Chart -->
+        <div class="chart-card animate-fade-in delay-1">
+          <div class="chart-card-header">
+            <div>
+              <div class="chart-card-title">Vehicle Distribution</div>
+              <div class="chart-card-sub">From most recent analysis</div>
+            </div>
+            <span id="traffic-level-badge" class="badge badge-muted">N/A</span>
+          </div>
+          <div id="dist-chart" style="padding:var(--space-2) 0">
+            <div class="empty-state" style="padding:var(--space-8)">
+              <div class="empty-state-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+              <div class="empty-state-title">No analysis data</div>
+              <div class="empty-state-desc">Run a video analysis from the Surveillance page to see vehicle distribution charts.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Analyses -->
+        <div class="chart-card animate-fade-in delay-2">
+          <div class="chart-card-header">
+            <div>
+              <div class="chart-card-title">Recent Analyses</div>
+              <div class="chart-card-sub">Last 5 processed videos</div>
+            </div>
+            <a href="/pages/history.html" class="btn btn-ghost btn-sm">View all</a>
+          </div>
+          <div id="recent-table-wrap">
+            <div class="empty-state" style="padding:var(--space-8)">
+              <div class="empty-state-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+              <div class="empty-state-title">No analyses yet</div>
+              <div class="empty-state-desc">Upload a video and run the AI detector to see results here.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right column -->
+      <div style="display:flex;flex-direction:column;gap:var(--space-5)">
+
+
+        <!-- Traffic Insights -->
+        <div class="chart-card animate-fade-in delay-4">
+          <div class="chart-card-header">
+            <div class="chart-card-title">Traffic Insights</div>
+          </div>
+          <div id="insights-panel">
+            <div class="empty-state" style="padding:var(--space-6)">
+              <div class="empty-state-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+              <div class="empty-state-desc">Insights will appear after running your first analysis.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="chart-card animate-fade-in delay-5">
+          <div class="chart-card-header">
+            <div class="chart-card-title">Quick Actions</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <a href="/pages/surveillance.html" class="btn btn-primary w-full">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M15 10l4.553-2.069A1 1 0 0121 8.866V19a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h3.5"/><circle cx="9" cy="9" r="3"/></svg>
+              New Video Analysis
+            </a>
+            <a href="/pages/history.html" class="btn btn-secondary w-full">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              View Analysis History
+            </a>
+            <a href="/pages/reports.html" class="btn btn-secondary w-full">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              Download Reports
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="/js/auth.js"></script>
+<script src="/js/api-client.js"></script>
+<script src="/js/shell.js"></script>
+<script>
+if (!Auth.requireAuth()) throw new Error('Not authenticated');
+document.addEventListener('DOMContentLoaded', () => {
+  renderShell('Dashboard');
+  loadDashboard();
+});
+
+async function loadDashboard() {
+  // Check server health
+  try {
+    await ApiClient.health();
+  } catch {}
+
+  const setVal = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val != null ? val : '0';
+  };
+
+  // Load history to get latest analysis data
+  try {
+    const history = await ApiClient.getHistory();
+    setVal('stat-analyses', history ? history.length : 0);
+
+    if (history && history.length > 0) {
+      const latest = history[0];
+      updateLastUpdated(latest.date);
+
+      // Try to load the actual report for the latest
+      try {
+        const sid = latest.sessionId || latest.session_id;
+        if (sid) {
+          const res = await ApiClient.getResult(sid);
+          if (res.report) renderDashboardData(res.report);
+        }
+      } catch {}
+
+      renderRecentTable(history.slice(0, 5));
+    } else {
+      // User has 0 analyses: set all counts strictly to 0
+      setVal('stat-total', '0');
+      setVal('stat-active', '0');
+      setVal('stat-car', '0');
+      setVal('stat-moto', '0');
+      setVal('stat-auto', '0');
+      setVal('stat-bus', '0');
+      setVal('stat-truck', '0');
+      const badge = document.getElementById('traffic-level-badge');
+      if (badge) {
+        badge.textContent = 'No Data';
+        badge.className = 'badge badge-muted';
+      }
+      const upd = document.getElementById('last-updated');
+      if (upd) upd.textContent = 'No analyses yet';
+    }
+  } catch (err) {
+    console.warn('Could not load history:', err.message);
+    setVal('stat-analyses', '0');
+    setVal('stat-total', '0');
+    setVal('stat-active', '0');
+    setVal('stat-car', '0');
+    setVal('stat-moto', '0');
+    setVal('stat-auto', '0');
+    setVal('stat-bus', '0');
+    setVal('stat-truck', '0');
+  }
+}
+
+function updateLastUpdated(dateStr) {
+  const el = document.getElementById('last-updated');
+  const wrap = document.getElementById('last-updated-wrap');
+  if (el && dateStr) {
+    el.textContent = 'Last: ' + formatDate(dateStr);
+    if (wrap) wrap.style.display = 'inline-flex';
+  }
+}
+
+function renderDashboardData(report) {
+  // Vehicle counts from REAL detector output
+  const v = report.vehicle_counts || report.vehicles || {};
+  const setVal = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val != null ? val : '—';
+  };
+  setVal('stat-total',  report.total_vehicles ?? report.total_unique ?? '—');
+  setVal('stat-active', report.active_now ?? '—');
+  setVal('stat-car',    v.car ?? report.cars ?? '—');
+  setVal('stat-moto',   v.motorcycle ?? report.motorcycles ?? '—');
+  setVal('stat-auto',   v.auto ?? v.auto_rickshaw ?? report.auto_rickshaws ?? '—');
+  setVal('stat-bus',    v.bus ?? report.buses ?? '—');
+  setVal('stat-truck',  v.truck ?? report.trucks ?? '—');
+
+  // Traffic level badge
+  const density = report.traffic_density?.level || report.traffic?.density || 'N/A';
+  const badge = document.getElementById('traffic-level-badge');
+  if (badge) {
+    badge.textContent = 'Traffic: ' + density;
+    const cls = { LOW:'badge-success', MEDIUM:'badge-warning', HIGH:'badge-error', SEVERE:'badge-error' };
+    badge.className = 'badge ' + (cls[density] || 'badge-muted');
+  }
+
+  // Distribution chart
+  const total = report.total_vehicles || 1;
+  const dists = [
+    { label: 'CAR',        key: 'car',        color: 'var(--car-color)',        val: v.car ?? report.cars ?? 0 },
+    { label: 'MOTORCYCLE', key: 'motorcycle',  color: 'var(--motorcycle-color)', val: v.motorcycle ?? report.motorcycles ?? 0 },
+    { label: 'AUTO',       key: 'auto',        color: 'var(--auto-color)',        val: v.auto ?? v.auto_rickshaw ?? report.auto_rickshaws ?? 0 },
+    { label: 'BUS',        key: 'bus',         color: 'var(--bus-color)',         val: v.bus ?? report.buses ?? 0 },
+    { label: 'TRUCK',      key: 'truck',       color: 'var(--truck-color)',       val: v.truck ?? report.trucks ?? 0 },
+  ];
+
+  const chartEl = document.getElementById('dist-chart');
+  if (chartEl) {
+    chartEl.innerHTML = dists.map(d => {
+      const pct = total > 0 ? Math.round((d.val / total) * 100) : 0;
+      return `
+        <div class="vdist-row">
+          <div class="vdist-label">${d.label}</div>
+          <div class="vdist-bar-wrap">
+            <div class="vdist-bar-fill" style="background:${d.color};width:${pct}%"></div>
+          </div>
+          <div class="vdist-count">${d.val}</div>
+        </div>`;
+    }).join('');
+  }
+
+  // Insights
+  const car = v.car || report.cars || 0;
+  const moto = v.motorcycle || report.motorcycles || 0;
+  const autoC = v.auto || report.auto_rickshaws || 0;
+  const busC = v.bus || report.buses || 0;
+  const truckC = v.truck || report.trucks || 0;
+  const tots = { car, motorcycle: moto, auto: autoC, bus: busC, truck: truckC };
+  const dominant = Object.entries(tots).sort((a,b)=>b[1]-a[1])[0];
+  const avgActive = report.traffic_density?.average_active ?? report.traffic?.average_active_vehicles ?? null;
+  const peakActive = report.traffic_density?.peak_active ?? report.traffic?.peak_active_vehicles ?? null;
+  const speed = report.speed?.average_kmh;
+
+  const ins = document.getElementById('insights-panel');
+  if (ins) {
+    ins.innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="surv-stat-item">
+          <span class="surv-stat-label">Traffic Density</span>
+          <span class="badge ${density==='LOW'?'badge-success':density==='MEDIUM'?'badge-warning':'badge-error'}">${density}</span>
+        </div>
+        <div class="surv-stat-item">
+          <span class="surv-stat-label">Dominant Type</span>
+          <span class="badge badge-accent" style="text-transform:uppercase">${dominant ? dominant[0] : 'N/A'}</span>
+        </div>
+        <div class="surv-stat-item">
+          <span class="surv-stat-label">Avg Active / Frame</span>
+          <span class="text-sm font-medium">${avgActive != null ? avgActive.toFixed(1) : 'N/A'}</span>
+        </div>
+        <div class="surv-stat-item">
+          <span class="surv-stat-label">Peak Active</span>
+          <span class="text-sm font-medium">${peakActive != null ? peakActive : 'N/A'}</span>
+        </div>
+        <div class="surv-stat-item">
+          <span class="surv-stat-label">Avg Speed</span>
+          <span class="text-sm font-medium">${speed != null ? speed + ' km/h' : 'N/A'}</span>
+        </div>
+      </div>`;
+  }
+}
+
+function renderRecentTable(history) {
+  const wrap = document.getElementById('recent-table-wrap');
+  if (!wrap || !history.length) return;
+  wrap.innerHTML = `
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Video</th>
+          <th>Date</th>
+          <th>Vehicles</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${history.map(h => {
+          const sid = h.sessionId || h.session_id;
+          const videoAvail = h.videoAvailable !== false;
+          return `
+          <tr>
+            <td class="truncate" style="max-width:160px" title="${h.filename}">${h.filename || '—'}</td>
+            <td style="white-space:nowrap">${formatDate(h.date)}</td>
+            <td><strong>${h.total_vehicles ?? '—'}</strong></td>
+            <td>
+              <span class="badge ${h.status==='completed'?'badge-success':'badge-error'}">${h.status || '—'}</span>
+              ${h.status === 'completed' ? (videoAvail ? '<span class="badge badge-accent" style="font-size:0.65rem">🎬</span>' : '<span class="badge badge-muted" style="font-size:0.65rem" title="Video replaced">📁</span>') : ''}
+            </td>
+            <td>
+              <a href="/pages/surveillance.html?session=${sid}" class="btn btn-ghost btn-sm" style="padding:4px 10px">View</a>
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>`;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings — SURVILLENCE TRAFFIC</title>
+  <link rel="stylesheet" href="/css/design-system.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/pages.css">
+</head>
+<body class="app-shell">
+<div class="app-content">
+  <main class="page-main">
+
+    <div style="margin-bottom:var(--space-5)" class="animate-fade-in">
+      <h2>Settings</h2>
+      <p class="text-sm text-muted" style="margin-top:4px">Manage your account, appearance, and detection configuration</p>
+    </div>
+
+    <div class="settings-layout">
+      <!-- Settings Nav -->
+      <div class="settings-nav-wrap">
+        <nav class="settings-nav" role="tablist">
+          <div class="settings-nav-item active" data-tab="profile" role="tab">Profile</div>
+          <div class="settings-nav-item" data-tab="appearance" role="tab">Appearance</div>
+          <div class="settings-nav-item" data-tab="notifications" role="tab">Notifications</div>
+          <div class="settings-nav-item" data-tab="detection" role="tab">Detection</div>
+          <div class="settings-nav-item" data-tab="storage" role="tab">Storage</div>
+          <div class="settings-nav-item" data-tab="system" role="tab">System Info</div>
+        </nav>
+      </div>
+
+      <!-- Settings Panels -->
+      <div>
+        <!-- Profile -->
+        <div class="settings-panel active" id="panel-profile">
+          <div class="card animate-fade-in">
+            <div class="settings-section-title">Profile Information</div>
+
+            <div id="profile-success" class="badge badge-success" style="display:none;margin-bottom:var(--space-4);padding:10px 14px;border-radius:var(--radius-md);width:100%">Profile updated successfully.</div>
+            <div id="profile-error" class="badge badge-error" style="display:none;margin-bottom:var(--space-4);padding:10px 14px;border-radius:var(--radius-md);width:100%"></div>
+
+            <div style="display:flex;flex-direction:column;gap:var(--space-4)">
+              <div class="form-group">
+                <label class="form-label">Full Name</label>
+                <input class="form-input" type="text" id="profile-name" placeholder="Your full name">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Email</label>
+                <input class="form-input" type="email" id="profile-email" placeholder="your@email.com">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Username</label>
+                <input class="form-input" type="text" id="profile-username" disabled style="opacity:0.5;cursor:not-allowed">
+                <span class="form-hint">Username cannot be changed after registration</span>
+              </div>
+              <div>
+                <button class="btn btn-primary" id="save-profile-btn">Save Changes</button>
+              </div>
+            </div>
+
+            <div style="border-top:1px solid var(--border-default);margin-top:var(--space-6);padding-top:var(--space-6)">
+              <div class="settings-section-title">Change Password</div>
+              <div id="pw-success" class="badge badge-success" style="display:none;margin-bottom:var(--space-4);padding:10px 14px;border-radius:var(--radius-md);width:100%">Password changed.</div>
+              <div id="pw-error" class="badge badge-error" style="display:none;margin-bottom:var(--space-4);padding:10px 14px;border-radius:var(--radius-md);width:100%"></div>
+              <div style="display:flex;flex-direction:column;gap:var(--space-4)">
+                <div class="form-group">
+                  <label class="form-label">Current Password</label>
+                  <input class="form-input" type="password" id="current-pw" placeholder="Current password">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">New Password</label>
+                  <input class="form-input" type="password" id="new-pw" placeholder="Min. 8 characters">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Confirm New Password</label>
+                  <input class="form-input" type="password" id="confirm-pw" placeholder="Repeat new password">
+                </div>
+                <div><button class="btn btn-secondary" id="change-pw-btn">Change Password</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Appearance -->
+        <div class="settings-panel" id="panel-appearance">
+          <div class="card animate-fade-in">
+            <div class="settings-section-title">Appearance</div>
+            <div class="settings-section">
+              <div class="settings-row">
+                <div class="settings-row-info">
+                  <div class="settings-row-label">Theme</div>
+                  <div class="settings-row-desc">Choose your preferred interface theme</div>
+                </div>
+                <div style="display:flex;gap:var(--space-2)">
+                  <button class="btn btn-secondary btn-sm theme-btn" data-theme="dark" id="btn-dark">
+                    🌙 Dark
+                  </button>
+                  <button class="btn btn-ghost btn-sm theme-btn" data-theme="light" id="btn-light">
+                    ☀️ Light
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notifications -->
+        <div class="settings-panel" id="panel-notifications">
+          <div class="card animate-fade-in">
+            <div class="settings-section-title">Notification Preferences</div>
+            <div class="settings-section">
+              <div class="settings-row">
+                <div class="settings-row-info">
+                  <div class="settings-row-label">Analysis Complete Notifications</div>
+                  <div class="settings-row-desc">Show a toast when video analysis finishes</div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="notif-analysis" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div class="settings-row">
+                <div class="settings-row-info">
+                  <div class="settings-row-label">Analysis Failed Notifications</div>
+                  <div class="settings-row-desc">Alert when detection encounters an error</div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="notif-error" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+            <button class="btn btn-primary btn-sm" id="save-notif-btn">Save Preferences</button>
+          </div>
+        </div>
+
+        <!-- Detection Settings -->
+        <div class="settings-panel" id="panel-detection">
+          <div class="card animate-fade-in">
+            <div class="settings-section-title">Detection Configuration</div>
+            <p class="text-sm text-muted" style="margin-bottom:var(--space-4)">These settings control safe detection parameters. Advanced model settings should be modified directly in main.py.</p>
+
+            <div class="settings-section">
+              <div class="settings-row">
+                <div class="settings-row-info">
+                  <div class="settings-row-label">Confidence Threshold</div>
+                  <div class="settings-row-desc">Minimum detection confidence (default: 0.20)</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:var(--space-3)">
+                  <span id="conf-value" style="font-size:0.85rem;font-weight:600;color:var(--accent-light);width:40px;text-align:right">0.20</span>
+                  <input type="range" class="form-range" id="conf-slider" min="0.10" max="0.70" step="0.05" value="0.20" style="width:120px">
+                </div>
+              </div>
+            </div>
+
+            <div class="badge badge-warning" style="padding:10px 14px;border-radius:var(--radius-md);font-size:0.8rem;width:100%;justify-content:flex-start;margin-top:var(--space-4)">
+              ⚠️ The confidence threshold setting is informational only. To apply it to the detector, edit the --conf argument in START.bat or pass it when running main.py directly.
+            </div>
+          </div>
+        </div>
+
+        <!-- Storage -->
+        <div class="settings-panel" id="panel-storage">
+          <div class="card animate-fade-in">
+            <div class="settings-section-title">Storage Management</div>
+            <div id="storage-stats-display" style="display:flex;flex-direction:column;gap:10px;margin-bottom:var(--space-5)">
+              <div class="loading-spinner sm mx-auto"></div>
+            </div>
+            <div style="display:flex;gap:var(--space-3);flex-wrap:wrap">
+              <button class="btn btn-secondary" id="cleanup-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+                Clean Up Unused Input Videos
+              </button>
+              <button class="btn btn-ghost" id="refresh-storage-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+                Refresh
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- System Info -->
+        <div class="settings-panel" id="panel-system">
+          <div class="card animate-fade-in">
+            <div class="settings-section-title">System Information</div>
+            <div id="system-info" style="display:flex;flex-direction:column;gap:10px;margin-bottom:var(--space-6)">
+              <div class="loading-spinner sm mx-auto"></div>
+            </div>
+
+            <div class="settings-section-title">Backend API Endpoint (Vercel & Remote Node)</div>
+            <p class="text-xs text-muted" style="margin-bottom:var(--space-4)">
+              When running locally, leave blank to use the same-origin server. When deployed to Vercel, enter your remote inference node URL (e.g. <code>https://my-backend.railway.app</code>, public IP, or ngrok tunnel).
+            </p>
+            <div style="display:flex;gap:var(--space-3);align-items:center;flex-wrap:wrap">
+              <input type="text" id="api-endpoint-input" class="form-input" placeholder="http://127.0.0.1:5000 (leave blank for auto)" style="flex:1;min-width:240px">
+              <button type="button" id="save-endpoint-btn" class="btn btn-primary btn-sm">Save & Test</button>
+              <button type="button" id="reset-endpoint-btn" class="btn btn-ghost btn-sm">Reset to Default</button>
+            </div>
+            <div id="endpoint-test-msg" class="text-xs" style="margin-top:8px;display:none"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/js/auth.js"></script>
+<script src="/js/api-client.js"></script>
+<script src="/js/shell.js"></script>
+<script>
+if (!Auth.requireAuth()) throw new Error('Not authenticated');
+document.addEventListener('DOMContentLoaded', () => {
+  renderShell('Settings');
+  initSettings();
+});
+
+function initSettings() {
+  const session = Auth.getSession();
+  const settings = Auth.getSettings();
+
+  // Tab switching
+  document.querySelectorAll('.settings-nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+      document.querySelectorAll('.settings-nav-item').forEach(i => i.classList.remove('active'));
+      document.querySelectorAll('.settings-panel').forEach(p => p.classList.remove('active'));
+      item.classList.add('active');
+      document.getElementById('panel-' + item.dataset.tab)?.classList.add('active');
+
+      if (item.dataset.tab === 'storage') loadStorageStats();
+      if (item.dataset.tab === 'system') loadSystemInfo();
+    });
+  });
+
+  // Profile
+  if (session) {
+    document.getElementById('profile-name').value = session.fullName || '';
+    document.getElementById('profile-email').value = session.email || '';
+    document.getElementById('profile-username').value = session.username || '';
+  }
+
+  document.getElementById('save-profile-btn').addEventListener('click', async () => {
+    const name  = document.getElementById('profile-name').value.trim();
+    const email = document.getElementById('profile-email').value.trim();
+    const succ = document.getElementById('profile-success');
+    const err  = document.getElementById('profile-error');
+    succ.style.display = 'none'; err.style.display = 'none';
+    if (!name || !email) { err.textContent = 'Name and email are required.'; err.style.display = 'flex'; return; }
+    const res = await Auth.updateProfile({ fullName: name, email });
+    if (res.ok) { succ.style.display = 'flex'; }
+    else { err.textContent = res.error; err.style.display = 'flex'; }
+  });
+
+  document.getElementById('change-pw-btn').addEventListener('click', async () => {
+    const cur  = document.getElementById('current-pw').value;
+    const nw   = document.getElementById('new-pw').value;
+    const cnf  = document.getElementById('confirm-pw').value;
+    const succ = document.getElementById('pw-success');
+    const err  = document.getElementById('pw-error');
+    succ.style.display = 'none'; err.style.display = 'none';
+    if (!cur || !nw || !cnf) { err.textContent = 'All fields required.'; err.style.display = 'flex'; return; }
+    if (nw.length < 8) { err.textContent = 'New password must be at least 8 characters.'; err.style.display = 'flex'; return; }
+    if (nw !== cnf) { err.textContent = 'Passwords do not match.'; err.style.display = 'flex'; return; }
+    const res = await Auth.changePassword({ currentPassword: cur, newPassword: nw });
+    if (res.ok) { succ.style.display = 'flex'; ['current-pw','new-pw','confirm-pw'].forEach(id => document.getElementById(id).value = ''); }
+    else { err.textContent = res.error; err.style.display = 'flex'; }
+  });
+
+  // Appearance / theme
+  function setThemeBtns(theme) {
+    document.getElementById('btn-dark').className = 'btn btn-sm theme-btn ' + (theme === 'dark' ? 'btn-primary' : 'btn-ghost');
+    document.getElementById('btn-light').className = 'btn btn-sm theme-btn ' + (theme === 'light' ? 'btn-primary' : 'btn-ghost');
+  }
+  setThemeBtns(settings.theme || 'dark');
+
+  document.querySelectorAll('.theme-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const theme = btn.dataset.theme;
+      document.documentElement.setAttribute('data-theme', theme);
+      Auth.updateSettings({ theme });
+      setThemeBtns(theme);
+      Toast.success('Theme changed', `Switched to ${theme} mode.`);
+    });
+  });
+
+  // Notifications
+  const notifSettings = settings.notifications ?? {};
+  document.getElementById('notif-analysis').checked = notifSettings.analysis !== false;
+  document.getElementById('notif-error').checked = notifSettings.error !== false;
+  document.getElementById('save-notif-btn').addEventListener('click', () => {
+    Auth.updateSettings({ notifications: {
+      analysis: document.getElementById('notif-analysis').checked,
+      error: document.getElementById('notif-error').checked,
+    }});
+    Toast.success('Saved', 'Notification preferences updated.');
+  });
+
+  // Detection slider
+  const confSlider = document.getElementById('conf-slider');
+  const confValue = document.getElementById('conf-value');
+  confSlider.value = settings.confidence || 0.20;
+  confValue.textContent = parseFloat(confSlider.value).toFixed(2);
+  confSlider.addEventListener('input', () => {
+    confValue.textContent = parseFloat(confSlider.value).toFixed(2);
+    Auth.updateSettings({ confidence: parseFloat(confSlider.value) });
+  });
+
+  // Storage
+  document.getElementById('cleanup-btn').addEventListener('click', async () => {
+    try {
+      const res = await ApiClient.cleanupStorage();
+      Toast.success('Cleanup done', `Removed ${res.removed_files} unused file(s).`);
+      loadStorageStats();
+    } catch (err) { Toast.error('Cleanup failed', err.message); }
+  });
+  // API Endpoint configuration
+  const endpointInput = document.getElementById('api-endpoint-input');
+  const saveEndpointBtn = document.getElementById('save-endpoint-btn');
+  const resetEndpointBtn = document.getElementById('reset-endpoint-btn');
+  const endpointMsg = document.getElementById('endpoint-test-msg');
+
+  if (endpointInput) {
+    endpointInput.value = ApiClient.getBaseUrl() || '';
+  }
+
+  if (saveEndpointBtn) {
+    saveEndpointBtn.addEventListener('click', async () => {
+      const url = endpointInput.value.trim();
+      ApiClient.setBaseUrl(url);
+      if (endpointMsg) {
+        endpointMsg.style.display = 'block';
+        endpointMsg.style.color = 'var(--text-muted)';
+        endpointMsg.textContent = 'Testing connection...';
+      }
+      try {
+        await ApiClient.health();
+        if (endpointMsg) {
+          endpointMsg.style.color = 'var(--success)';
+          endpointMsg.textContent = `✓ Connected successfully to: ${url || 'Same-origin local server'}`;
+        }
+        Toast.success('Endpoint Saved', 'Backend API connected successfully');
+      } catch (err) {
+        if (endpointMsg) {
+          endpointMsg.style.color = 'var(--error)';
+          endpointMsg.textContent = `✗ Connection failed: ${err.message}`;
+        }
+        Toast.error('Connection Failed', err.message);
+      }
+    });
+  }
+
+  if (resetEndpointBtn) {
+    resetEndpointBtn.addEventListener('click', () => {
+      ApiClient.setBaseUrl('');
+      if (endpointInput) endpointInput.value = '';
+      if (endpointMsg) {
+        endpointMsg.style.display = 'block';
+        endpointMsg.style.color = 'var(--success)';
+        endpointMsg.textContent = 'Reset to default same-origin.';
+      }
+      Toast.info('Endpoint Reset', 'Using default origin');
+    });
+  }
+}
+
+async function loadStorageStats() {
+  const el = document.getElementById('storage-stats-display');
+  try {
+    const stats = await ApiClient.storageStats();
+    el.innerHTML = `
+      <div class="surv-stat-item"><span class="surv-stat-label">Input Videos (uploads)</span><span class="font-medium">${formatBytes(stats.videos_in_bytes)}</span></div>
+      <div class="surv-stat-item"><span class="surv-stat-label">Processed Videos (results)</span><span class="font-medium">${formatBytes(stats.videos_out_bytes)}</span></div>
+      <div class="surv-stat-item"><span class="surv-stat-label">Reports</span><span class="font-medium">${formatBytes(stats.reports_bytes)}</span></div>
+      <div class="surv-stat-item"><span class="surv-stat-label">Total Storage Used</span><span class="font-semibold" style="color:var(--accent-light)">${formatBytes(stats.total_bytes)}</span></div>
+      <div class="surv-stat-item"><span class="surv-stat-label">History Entries (permanent)</span><span class="font-medium">${stats.history_count}</span></div>
+      <div class="surv-stat-item"><span class="surv-stat-label">Physical Videos Retained</span><span class="font-medium" style="color:var(--success)">${stats.retained_videos ?? 0} / 1</span></div>
+      <div class="badge badge-muted" style="padding:8px 12px;border-radius:var(--radius-md);font-size:0.75rem;width:100%;justify-content:flex-start;margin-top:4px">
+        📹 Only the most recent successfully processed video is kept physically. All history metadata is permanent.
+      </div>`;
+  } catch (err) {
+    el.innerHTML = `<div class="text-sm text-muted">Could not load storage stats — is the server running?</div>`;
+  }
+}
+
+async function loadSystemInfo() {
+  const el = document.getElementById('system-info');
+  try {
+    const health = await ApiClient.health();
+    el.innerHTML = `
+      <div class="surv-stat-item"><span class="surv-stat-label">Server Status</span><span class="badge badge-success">Online</span></div>
+      <div class="surv-stat-item"><span class="surv-stat-label">Detector</span><span class="text-sm font-mono" style="color:var(--text-muted);font-size:0.72rem;max-width:280px;overflow:hidden;text-overflow:ellipsis">${health.detector}</span></div>
+      <div class="surv-stat-item"><span class="surv-stat-label">Model Present</span><span class="badge ${health.model_exists?'badge-success':'badge-error'}">${health.model_exists?'Yes — UVH-26 YOLOv11-S':'NOT FOUND'}</span></div>
+      <div class="surv-stat-item"><span class="surv-stat-label">Storage Path</span><span class="text-sm font-mono" style="color:var(--text-muted);font-size:0.72rem">${health.storage}</span></div>
+      <div class="surv-stat-item"><span class="surv-stat-label">Authentication</span><span class="badge badge-success">Local (SHA-256)</span></div>
+      <div class="surv-stat-item"><span class="surv-stat-label">External APIs</span><span class="badge badge-success">None — Fully Local</span></div>`;
+  } catch (err) {
+    el.innerHTML = `
+      <div class="surv-stat-item"><span class="surv-stat-label">Server Status</span><span class="badge badge-error">Offline</span></div>
+      <div class="text-sm text-muted">Start the local server via START.bat to see system information.</div>`;
+  }
+}
+</script>
+</body>
+</html>

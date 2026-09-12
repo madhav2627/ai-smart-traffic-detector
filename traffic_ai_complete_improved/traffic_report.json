@@ -1,0 +1,89 @@
+{
+  "session_id": null,
+  "video": "",
+  "model": "vehicle_traffic.pt",
+  "model_source": "IISc UVH-26 YOLOv11-S",
+  "frames_processed": 0,
+  "processing_time_seconds": 0.0,
+  "analysis_duration": 0.0,
+  "video_duration": 0.0,
+  "processing_fps": 0.0,
+  "total_unique": 0,
+  "total_vehicles": 0,
+  "total_count": 0,
+  "cars": 0,
+  "motorcycles": 0,
+  "auto_rickshaws": 0,
+  "buses": 0,
+  "trucks": 0,
+  "active_now": 0,
+  "vehicle_counts": {
+    "car": 0,
+    "motorcycle": 0,
+    "auto": 0,
+    "auto_rickshaw": 0,
+    "bus": 0,
+    "truck": 0
+  },
+  "vehicles": {
+    "total": 0,
+    "car": 0,
+    "motorcycle": 0,
+    "auto": 0,
+    "auto_rickshaw": 0,
+    "bus": 0,
+    "truck": 0
+  },
+  "direction": {
+    "up": 0,
+    "down": 0,
+    "unknown": 0
+  },
+  "direction_counts": {
+    "UP": 0,
+    "DOWN": 0,
+    "UNKNOWN": 0
+  },
+  "traffic_density": {
+    "average_active": 0.0,
+    "peak_active": 0,
+    "level": "LOW"
+  },
+  "traffic": {
+    "density": "LOW",
+    "average_active_vehicles": 0.0,
+    "peak_active_vehicles": 0
+  },
+  "speed": {
+    "average_pixels_per_second": 0.0,
+    "average_kmh": null,
+    "real_kmh_enabled": false
+  },
+  "relative_speed": 0.0,
+  "configuration": {
+    "tracker": "bytetrack.yaml",
+    "detect_confidence": 0.2,
+    "image_size": 512,
+    "meters_per_pixel": 0.0,
+    "frame_stride": 1,
+    "min_confirm_frames": 2,
+    "counting_method": "unique persistent tracked vehicles; no counting line"
+  },
+  "uvh26_class_mapping": {
+    "Hatchback": "car",
+    "Sedan": "car",
+    "SUV": "car",
+    "MUV": "car",
+    "Bus": "bus",
+    "Truck": "truck",
+    "Three-wheeler": "auto",
+    "Two-wheeler": "motorcycle",
+    "LCV": "truck",
+    "Mini-bus": "bus",
+    "tempo-traveller": "bus",
+    "Van": "car",
+    "bicycle": "motorcycle",
+    "Others": "car"
+  },
+  "vehicles_detail": []
+}

@@ -1,0 +1,40 @@
+# Python caches & virtual environments
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.env
+.venv
+env/
+venv/
+ENV/
+
+# User storage & session media (protects privacy & keeps repo under size limits)
+storage/videos/*
+!storage/videos/.gitkeep
+storage/results/*.mp4
+!storage/results/.gitkeep
+storage/results/*.avi
+storage/history/*
+!storage/history/.gitkeep
+storage/users/*
+!storage/users/.gitkeep
+storage/reports/*
+!storage/reports/.gitkeep
+storage/users.db
+storage/*.db
+
+# IDE & OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+*.log
+
+# System generated
+.system_generated/
+scratch/

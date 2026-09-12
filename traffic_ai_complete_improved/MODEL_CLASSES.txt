@@ -1,0 +1,34 @@
+UVH-26 bundled model: UVH-26-MV-YOLOv11-S.pt
+Packaged filename: vehicle_traffic.pt
+
+Original UVH-26 classes:
+0 Hatchback
+1 Sedan
+2 SUV
+3 MUV
+4 Bus
+5 Truck
+6 Three-wheeler
+7 Two-wheeler
+8 LCV
+9 Mini-bus
+10 tempo-traveller
+11 bicycle
+12 Van
+13 Others
+
+Application mapping:
+Hatchback -> car
+Sedan -> car
+SUV -> car
+MUV -> car
+Bus -> bus
+Truck -> truck
+Three-wheeler -> auto
+Two-wheeler -> motorcycle
+LCV -> truck
+Mini-bus -> bus
+Van -> car
+tempo-traveller -> ignored
+bicycle -> ignored
+Others -> ignored

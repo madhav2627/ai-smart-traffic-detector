@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>History — SURVILLENCE TRAFFIC</title>
+  <link rel="stylesheet" href="/css/design-system.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/pages.css">
+</head>
+<body class="app-shell">
+<div class="app-content">
+  <main class="page-main">
+
+    <div class="page-header-row animate-fade-in" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-5);flex-wrap:wrap;gap:var(--space-3)">
+      <div>
+        <h2>Analysis History</h2>
+        <p class="text-sm text-muted" style="margin-top:4px">Your previously processed traffic analyses</p>
+      </div>
+      <a href="/pages/surveillance.html" class="btn btn-primary btn-sm">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New Analysis
+      </a>
+    </div>
+
+    <!-- Loading state -->
+    <div id="history-loading" class="card" style="text-align:center;padding:var(--space-8)">
+      <div style="display:flex;align-items:center;justify-content:center;gap:var(--space-3)">
+        <div class="loading-spinner"></div>
+        <span class="text-sm text-muted">Loading history...</span>
+      </div>
+    </div>
+
+    <!-- Empty state -->
+    <div id="history-empty" class="card" style="display:none;text-align:center;padding:var(--space-12)">
+      <div class="empty-state">
+        <div class="empty-state-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="empty-state-title">No analysis history</div>
+        <div class="empty-state-desc">Your completed analyses will appear here. Process a traffic video to get started.</div>
+        <a href="/pages/surveillance.html" class="btn btn-primary" style="margin-top:var(--space-4)">Start First Analysis</a>
+      </div>
+    </div>
+
+    <!-- History records container -->
+    <div id="history-table-wrap" style="display:none" class="animate-fade-in">
+      <div class="chart-card" style="padding:0;overflow:hidden">
+        <div style="padding:var(--space-4) var(--space-5);border-bottom:1px solid var(--border-default);display:flex;align-items:center;justify-content:space-between">
+          <span class="chart-card-title">My Analysis Sessions</span>
+          <span class="badge badge-muted" id="history-count"></span>
+        </div>
+
+        <!-- Desktop Table View (screens > 768px) -->
+        <div class="history-desktop-table" style="overflow-x:auto">
+          <table class="data-table" id="history-table">
+            <thead>
+              <tr>
+                <th>Video File</th>
+                <th>Date &amp; Time</th>
+                <th>Duration</th>
+                <th>Total Vehicles</th>
+                <th>Processing Time</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="history-body"></tbody>
+          </table>
+        </div>
+
+        <!-- Mobile Card View (screens <= 768px) -->
+        <div class="history-mobile-cards" id="history-cards-body" style="padding:var(--space-4)"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Delete confirm modal -->
+<div class="modal-overlay" id="delete-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Delete Analysis</span>
+      <button class="modal-close" id="modal-close-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <p class="text-sm" style="margin-bottom:var(--space-5);color:var(--text-secondary)">
+      Are you sure you want to delete this analysis? The associated video files and report will be permanently removed from local storage.
+    </p>
+    <div style="display:flex;gap:var(--space-3);justify-content:flex-end">
+      <button class="btn btn-ghost" id="modal-cancel">Cancel</button>
+      <button class="btn btn-danger" id="modal-confirm">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/auth.js"></script>
+<script src="/js/api-client.js"></script>
+<script src="/js/shell.js"></script>
+<script>
+if (!Auth.requireAuth()) throw new Error('Not authenticated');
+document.addEventListener('DOMContentLoaded', () => {
+  renderShell('History');
+  loadHistory();
+  setupModal();
+});
+
+let pendingDeleteId = null;
+
+function setupModal() {
+  const overlay = document.getElementById('delete-modal');
+  const closeBtn = document.getElementById('modal-close-btn');
+  const cancelBtn = document.getElementById('modal-cancel');
+  const confirmBtn = document.getElementById('modal-confirm');
+
+  function close() { overlay.classList.remove('open'); pendingDeleteId = null; }
+  closeBtn.addEventListener('click', close);
+  cancelBtn.addEventListener('click', close);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+
+  confirmBtn.addEventListener('click', async () => {
+    if (!pendingDeleteId) return;
+    try {
+      await ApiClient.deleteHistory(pendingDeleteId);
+      Toast.success('Deleted', 'Analysis removed from history.');
+      close();
+      loadHistory();
+    } catch (err) {
+      Toast.error('Delete failed', err.message);
+    }
+  });
+}
+
+async function loadHistory() {
+  document.getElementById('history-loading').style.display = 'block';
+  document.getElementById('history-empty').style.display = 'none';
+  document.getElementById('history-table-wrap').style.display = 'none';
+
+  try {
+    const history = await ApiClient.getHistory();
+    document.getElementById('history-loading').style.display = 'none';
+
+    if (history.length === 0) {
+      document.getElementById('history-count').textContent = '0 sessions';
+      document.getElementById('history-empty').style.display = 'block';
+      return;
+    }
+
+    document.getElementById('history-count').textContent = history.length + ' sessions';
+    document.getElementById('history-table-wrap').style.display = 'block';
+    renderTable(history);
+  } catch (err) {
+    document.getElementById('history-loading').style.display = 'none';
+    document.getElementById('history-empty').style.display = 'block';
+    Toast.error('Load failed', err.message);
+  }
+}
+
+function renderTable(history) {
+  const tbody = document.getElementById('history-body');
+  const cardsWrap = document.getElementById('history-cards-body');
+
+  // 1. Desktop Table
+  tbody.innerHTML = history.map(h => {
+    const sid = h.sessionId || h.session_id;
+    const statusBadge = h.status === 'completed'
+      ? '<span class="badge badge-success">Completed</span>'
+      : '<span class="badge badge-error">Failed</span>';
+    const videoAvail = h.videoAvailable !== false;
+    const videoBadge = h.status === 'completed'
+      ? (videoAvail
+          ? '<span class="badge badge-accent" title="Video available for playback">🎬 Video Available</span>'
+          : '<span class="badge badge-muted" title="Physical video has been replaced by a newer upload">Original video no longer stored</span>')
+      : '';
+    return `
+      <tr>
+        <td>
+          <div class="truncate" style="max-width:220px;font-weight:500" title="${h.filename}">${h.filename || '—'}</div>
+          <div class="text-xs text-muted font-mono" style="margin-top:2px">${sid}</div>
+        </td>
+        <td style="white-space:nowrap">${formatDate(h.date)}</td>
+        <td>${formatDuration(h.video_duration)}</td>
+        <td><strong style="color:var(--text-primary)">${h.total_vehicles ?? '—'}</strong></td>
+        <td>${formatDuration(h.processing_time)}</td>
+        <td>${statusBadge} ${videoBadge}</td>
+        <td>
+          <div style="display:flex;gap:var(--space-2)">
+            ${videoAvail && h.status === 'completed'
+              ? `<a href="/pages/surveillance.html?session=${sid}" class="btn btn-secondary btn-sm" title="View analysis">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  View
+                </a>`
+              : h.status === 'completed'
+              ? `<a href="/pages/surveillance.html?session=${sid}" class="btn btn-ghost btn-sm" title="View report data (video unavailable)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  Data
+                </a>`
+              : ''}
+            <a href="/pages/reports.html?session=${sid}" class="btn btn-ghost btn-sm" title="View report">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </a>
+            <button class="btn btn-ghost btn-sm" title="Delete" onclick="confirmDelete('${sid}')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--error)" stroke-width="2" style="width:13px;height:13px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+            </button>
+          </div>
+        </td>
+      </tr>`;
+  }).join('');
+
+  // 2. Mobile Responsive Cards
+  if (cardsWrap) {
+    cardsWrap.innerHTML = history.map(h => {
+      const sid = h.sessionId || h.session_id;
+      const statusBadge = h.status === 'completed'
+        ? '<span class="badge badge-success">Completed</span>'
+        : '<span class="badge badge-error">Failed</span>';
+      const videoAvail = h.videoAvailable !== false;
+      const videoNotice = videoAvail
+        ? '<span class="badge badge-success" style="font-size:0.7rem">Video Available</span>'
+        : '<span class="badge badge-muted" style="font-size:0.7rem">Original video no longer stored</span>';
+
+      return `
+        <div class="history-card-item card animate-fade-in" style="margin-bottom:var(--space-3);padding:var(--space-4)">
+          <div class="history-card-top" style="display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-2)">
+            <div>
+              <div class="text-xs text-muted" style="text-transform:uppercase;letter-spacing:0.05em">VIDEO</div>
+              <div class="font-semibold" style="font-size:0.95rem;word-break:break-all">${h.filename || '—'}</div>
+              <div class="text-xs text-muted" style="margin-top:2px">${formatDate(h.date)}</div>
+            </div>
+            ${statusBadge}
+          </div>
+
+          <div style="margin:var(--space-3) 0;padding:var(--space-3);background:var(--bg-secondary);border-radius:var(--radius-md)">
+            <div style="font-size:1.1rem;font-weight:700;color:var(--accent-light);margin-bottom:6px">
+              ${h.total_vehicles ?? 0} <span style="font-size:0.85rem;font-weight:400;color:var(--text-secondary)">vehicles</span>
+            </div>
+            <div class="history-class-chips" style="display:flex;flex-wrap:wrap;gap:6px;font-size:0.75rem">
+              <span class="badge" style="background:rgba(96,165,250,0.12);color:var(--car-color)">${h.cars ?? 0} Cars</span>
+              <span class="badge" style="background:rgba(52,211,153,0.12);color:var(--motorcycle-color)">${h.motorcycles ?? 0} Motorcycles</span>
+              <span class="badge" style="background:rgba(251,146,60,0.12);color:var(--auto-color)">${h.auto_rickshaws ?? 0} Autos</span>
+              <span class="badge" style="background:rgba(167,139,250,0.12);color:var(--bus-color)">${h.buses ?? 0} Buses</span>
+              <span class="badge" style="background:rgba(244,114,182,0.12);color:var(--truck-color)">${h.trucks ?? 0} Trucks</span>
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--space-2)">
+            <div>${videoNotice}</div>
+            <div style="display:flex;gap:var(--space-2)">
+              ${videoAvail && h.status === 'completed'
+                ? `<a href="/pages/surveillance.html?session=${sid}" class="btn btn-primary btn-sm">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    View
+                   </a>`
+                : h.status === 'completed'
+                ? `<a href="/pages/surveillance.html?session=${sid}" class="btn btn-ghost btn-sm">
+                    View Data
+                   </a>`
+                : ''}
+              <a href="/pages/reports.html?session=${sid}" class="btn btn-secondary btn-sm">
+                Report
+              </a>
+              <button class="btn btn-ghost btn-sm btn-icon" onclick="confirmDelete('${sid}')" title="Delete">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--error)" stroke-width="2" style="width:13px;height:13px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+}
+
+function confirmDelete(sessionId) {
+  pendingDeleteId = sessionId;
+  document.getElementById('delete-modal').classList.add('open');
+}
+</script>
+</body>
+</html>

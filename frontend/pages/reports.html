@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reports — SURVILLENCE TRAFFIC</title>
+  <link rel="stylesheet" href="/css/design-system.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/pages.css">
+</head>
+<body class="app-shell">
+<div class="app-content">
+  <main class="page-main">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-5)" class="animate-fade-in">
+      <div>
+        <h2>Reports</h2>
+        <p class="text-sm text-muted" style="margin-top:4px">Analysis summaries and downloadable reports</p>
+      </div>
+    </div>
+
+    <div class="reports-layout-container">
+      <!-- Session list (Desktop view) -->
+      <div class="chart-card reports-sidebar-panel" style="padding:0;overflow:hidden;height:fit-content">
+        <div style="padding:var(--space-4) var(--space-5);border-bottom:1px solid var(--border-default)">
+          <span class="chart-card-title">Select Analysis</span>
+        </div>
+        <div id="session-list" style="overflow-y:auto;max-height:600px">
+          <div class="empty-state" style="padding:var(--space-8)">
+            <div class="loading-spinner"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Report detail & Mobile Stack -->
+      <div id="report-main-col" class="report-main-col" style="min-width:0">
+        <!-- Mobile session picker (visible on mobile only) -->
+        <div class="reports-mobile-picker" id="mobile-picker-wrap" style="margin-bottom:var(--space-4)">
+          <label class="form-label" for="mobile-session-select" style="margin-bottom:6px">Select Analysis</label>
+          <select class="form-select" id="mobile-session-select" style="width:100%;max-width:100%">
+            <option value="">Choose an analysis session...</option>
+          </select>
+        </div>
+
+        <div id="report-detail">
+          <div class="empty-state" style="padding:var(--space-12)">
+            <div class="empty-state-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
+            </div>
+            <div class="empty-state-title">Select a session</div>
+            <div class="empty-state-desc">Choose an analysis from the list to view its report.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/js/auth.js"></script>
+<script src="/js/api-client.js"></script>
+<script src="/js/shell.js"></script>
+<script>
+if (!Auth.requireAuth()) throw new Error('Not authenticated');
+let allHistory = [];
+
+document.addEventListener('DOMContentLoaded', async () => {
+  renderShell('Reports');
+  await loadSessions();
+
+  // Mobile session select listener
+  const mobSel = document.getElementById('mobile-session-select');
+  if (mobSel) {
+    mobSel.addEventListener('change', () => {
+      if (mobSel.value) loadReport(mobSel.value);
+    });
+  }
+
+  // Auto-select from URL param or default to latest
+  const params = new URLSearchParams(window.location.search);
+  const sid = params.get('session');
+  if (sid) {
+    loadReport(sid);
+  } else if (allHistory.length > 0) {
+    const firstSid = allHistory[0].sessionId || allHistory[0].session_id;
+    loadReport(firstSid);
+  }
+});
+
+async function loadSessions() {
+  try {
+    allHistory = await ApiClient.getHistory();
+    const list = document.getElementById('session-list');
+    const mobSel = document.getElementById('mobile-session-select');
+
+    if (allHistory.length === 0) {
+      list.innerHTML = '<div class="empty-state" style="padding:var(--space-8)"><div class="empty-state-desc">No analyses yet</div></div>';
+      if (mobSel) mobSel.innerHTML = '<option value="">No analyses yet</option>';
+      return;
+    }
+
+    // Populate desktop list
+    list.innerHTML = allHistory.map(h => {
+      const sid = h.sessionId || h.session_id;
+      const isVideoAvail = h.videoAvailable !== false;
+      return `
+      <div class="report-card-body" style="padding:var(--space-3) var(--space-4);cursor:pointer;border-bottom:1px solid var(--border-muted);transition:background var(--transition-fast)" 
+           onclick="loadReport('${sid}')" id="sess-${sid}"
+           onmouseover="this.style.background='var(--bg-card-hover)'" 
+           onmouseout="this.style.background='transparent'">
+        <div class="truncate font-medium" style="font-size:0.85rem" title="${h.filename}">${h.filename || '—'}</div>
+        <div class="text-xs text-muted" style="margin-top:3px">${formatDate(h.date)}</div>
+        <div style="display:flex;gap:var(--space-2);margin-top:4px;align-items:center">
+          <span class="badge ${h.status==='completed'?'badge-success':'badge-error'}" style="font-size:0.65rem">${h.status}</span>
+          <span class="badge badge-muted" style="font-size:0.65rem">${h.total_vehicles ?? 0} vehicles</span>
+          ${isVideoAvail ? '<span class="badge badge-primary" style="font-size:0.62rem">Video</span>' : '<span class="badge badge-muted" style="font-size:0.62rem" title="Data only">Data Only</span>'}
+        </div>
+      </div>`;
+    }).join('');
+
+    // Populate mobile select
+    if (mobSel) {
+      mobSel.innerHTML = allHistory.map(h => {
+        const sid = h.sessionId || h.session_id;
+        const fname = (h.filename || '').length > 24 ? (h.filename || '').slice(0, 21) + '...' : (h.filename || 'Session');
+        return `<option value="${sid}">${fname} (${formatDate(h.date)})</option>`;
+      }).join('');
+    }
+  } catch (err) {
+    Toast.error('Load failed', err.message);
+  }
+}
+
+async function loadReport(sessionId) {
+  // Highlight selected in desktop list
+  document.querySelectorAll('[id^="sess-"]').forEach(el => el.style.borderLeft = 'none');
+  const sesEl = document.getElementById(`sess-${sessionId}`);
+  if (sesEl) sesEl.style.borderLeft = '3px solid var(--accent)';
+
+  // Sync mobile select
+  const mobSel = document.getElementById('mobile-session-select');
+  if (mobSel && mobSel.value !== sessionId) mobSel.value = sessionId;
+
+  const detail = document.getElementById('report-detail');
+  detail.innerHTML = '<div class="empty-state" style="padding:var(--space-12)"><div class="loading-spinner lg"></div></div>';
+
+  try {
+    const res = await ApiClient.getResult(sessionId);
+    if (!res.report) {
+      detail.innerHTML = '<div class="empty-state" style="padding:var(--space-12)"><div class="empty-state-title">No report data</div><div class="empty-state-desc">This session has no associated report.</div></div>';
+      return;
+    }
+    renderReport(res.report, sessionId);
+  } catch (err) {
+    detail.innerHTML = `<div class="empty-state" style="padding:var(--space-12)"><div class="empty-state-title">Load failed</div><div class="empty-state-desc">${err.message}</div></div>`;
+  }
+}
+
+function metaItem(key, val) {
+  return `<div class="report-meta-item"><div class="report-meta-key">${key}</div><div class="report-meta-value">${val ?? 'N/A'}</div></div>`;
+}
+
+function renderReport(report, sessionId) {
+  const v = report.vehicle_counts || report.vehicles || {};
+  const total = report.total_vehicles ?? report.total_unique ?? 0;
+  const car   = v.car ?? report.cars ?? 0;
+  const moto  = v.motorcycle ?? report.motorcycles ?? 0;
+  const auto  = v.auto ?? v.auto_rickshaw ?? report.auto_rickshaws ?? 0;
+  const bus   = v.bus ?? report.buses ?? 0;
+  const truck = v.truck ?? report.trucks ?? 0;
+  const active= report.active_now ?? 0;
+  const density = report.traffic_density?.level || report.traffic?.density || 'N/A';
+  const sp = report.speed || {};
+  const detail = document.getElementById('report-detail');
+  const levelCls = {LOW:'badge-success',MEDIUM:'badge-warning',HIGH:'badge-error',SEVERE:'badge-error'};
+
+  detail.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:var(--space-4)" class="animate-fade-in">
+
+      <!-- Header -->
+      <div class="report-card">
+        <div class="report-card-header">
+          <div>
+            <div style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:4px">Analysis Report</div>
+            <div class="font-semibold truncate" style="max-width:400px">${report.video?.split(/[\\/]/).pop() || 'Video'}</div>
+          </div>
+          <div style="display:flex;gap:var(--space-2);align-items:center">
+            <button onclick="downloadJSON('${sessionId}')" class="btn btn-secondary btn-sm">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Download JSON
+            </button>
+            ${(() => {
+              const histEntry = allHistory.find(h => (h.sessionId || h.session_id) === sessionId);
+              const hasVideo = histEntry ? histEntry.videoAvailable !== false : true;
+              return hasVideo
+                ? `<a href="/pages/surveillance.html?session=${sessionId}" class="btn btn-primary btn-sm">
+                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                     View Video
+                   </a>`
+                : `<span class="badge badge-muted" style="display:inline-flex;align-items:center;gap:4px;padding:5px 9px;font-size:0.75rem" title="Under the 1-retained-video policy, older video files are cleaned while history data is kept permanently.">
+                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><line x1="1" y1="1" x2="23" y2="23"/><path d="M21 15V9a2 2 0 00-2-2H7l4 4h8a1 1 0 011 1v3"/></svg>
+                     Data Retained (1-Video Policy)
+                   </span>`;
+            })()}
+          </div>
+        </div>
+        <div class="report-meta">
+          ${metaItem('Session ID', `<span class="font-mono text-xs">${report.session_id}</span>`)}
+          ${metaItem('Model', report.model_source || 'UVH-26 YOLOv11-S')}
+          ${metaItem('Tracker', report.configuration?.tracker || 'ByteTrack')}
+          ${metaItem('Video Duration', formatDuration(report.video_duration))}
+          ${metaItem('Processing Time', formatDuration(report.processing_time_seconds))}
+        </div>
+      </div>
+
+      <!-- Vehicle counts -->
+      <div class="report-card">
+        <div class="report-card-header">
+          <div class="font-semibold">Vehicle Detection Results</div>
+          <span class="badge badge-success">${total} Total Unique</span>
+        </div>
+        <div class="report-card-body">
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:var(--space-3)">
+            ${[
+              {label:'Total Unique', val:total, color:'var(--text-primary)'},
+              {label:'Active (End)',  val:active, color:'var(--success)'},
+              {label:'Cars',         val:car,    color:'var(--car-color)'},
+              {label:'Motorcycles',  val:moto,   color:'var(--motorcycle-color)'},
+              {label:'Autos',        val:auto,   color:'var(--auto-color)'},
+              {label:'Buses',        val:bus,    color:'var(--bus-color)'},
+              {label:'Trucks',       val:truck,  color:'var(--truck-color)'},
+            ].map(c=>`
+              <div style="background:var(--bg-secondary);border:1px solid var(--border-default);border-radius:var(--radius-md);padding:var(--space-3);text-align:center">
+                <div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em">${c.label}</div>
+                <div style="font-size:1.5rem;font-weight:700;color:${c.color}">${c.val}</div>
+              </div>`).join('')}
+          </div>
+        </div>
+      </div>
+
+      <!-- Traffic & Speed -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4)">
+        <div class="report-card">
+          <div class="report-card-header">
+            <div class="font-semibold">Traffic Density</div>
+            <span class="badge ${levelCls[density]||'badge-muted'}">${density}</span>
+          </div>
+          <div class="report-card-body">
+            <div class="report-meta">
+              ${metaItem('Level', density)}
+              ${metaItem('Avg Active', report.traffic_density?.average_active?.toFixed(2) ?? report.traffic?.average_active_vehicles?.toFixed(2) ?? 'N/A')}
+              ${metaItem('Peak Active', report.traffic_density?.peak_active ?? report.traffic?.peak_active_vehicles ?? 'N/A')}
+            </div>
+          </div>
+        </div>
+        <div class="report-card">
+          <div class="report-card-header">
+            <div class="font-semibold">Speed</div>
+          </div>
+          <div class="report-card-body">
+            <div class="report-meta">
+              ${metaItem('Relative (px/s)', sp.average_pixels_per_second?.toFixed(1) ?? 'N/A')}
+              ${metaItem('Calibrated (km/h)', sp.average_kmh != null ? sp.average_kmh.toFixed(1) + ' km/h' : 'N/A')}
+              ${metaItem('Real km/h Enabled', sp.real_kmh_enabled ? 'Yes' : 'No')}
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>`;
+
+  // Store report for download
+  window._currentReport = report;
+  window._currentSessionId = sessionId;
+}
+
+async function downloadJSON(sessionId) {
+  if (!window._currentReport) return;
+  const blob = new Blob([JSON.stringify(window._currentReport, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `survillence_report_${sessionId}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  Toast.success('Downloaded', 'Report saved as JSON.');
+}
+</script>
+</body>
+</html>

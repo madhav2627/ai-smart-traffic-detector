@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vehicle Analytics — SURVILLENCE TRAFFIC</title>
+  <link rel="stylesheet" href="/css/design-system.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/pages.css">
+</head>
+<body class="app-shell">
+<div class="app-content">
+  <main class="page-main">
+
+    <div class="page-header-row animate-fade-in" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-5);flex-wrap:wrap;gap:var(--space-3)">
+      <div>
+        <h2>Vehicle Analytics</h2>
+        <p class="text-sm text-muted" style="margin-top:4px">Analysis results from the AI detection engine</p>
+      </div>
+      <div style="display:flex;gap:var(--space-3);align-items:center;width:auto;max-width:100%" class="header-select-wrap">
+        <select class="form-select" id="session-select" style="max-width:100%;width:100%">
+          <option value="">Select an analysis session...</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Empty state when no session selected -->
+    <div id="empty-analytics" class="card animate-fade-in" style="text-align:center;padding:var(--space-12)">
+      <div class="empty-state">
+        <div class="empty-state-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <div class="empty-state-title">No analysis data available yet</div>
+        <div class="empty-state-desc">Process a traffic video from the Surveillance page to see detailed analytics here.</div>
+        <a href="/pages/surveillance.html" class="btn btn-primary" style="margin-top:var(--space-4)">Start Analysis</a>
+      </div>
+    </div>
+
+    <!-- Analytics content (hidden until session loaded) -->
+    <div id="analytics-content" style="display:none">
+
+      <!-- Top stat cards (1-col on mobile, multi-col on desktop) -->
+      <div class="stats-grid analytics-stats-grid" id="analytics-stats">
+      </div>
+
+      <div class="content-grid" style="margin-top:var(--space-5)">
+        <!-- Left: charts -->
+        <div style="display:flex;flex-direction:column;gap:var(--space-5)">
+
+          <!-- Vehicle Type Distribution -->
+          <div class="chart-card animate-fade-in delay-1">
+            <div class="chart-card-header">
+              <div>
+                <div class="chart-card-title">Vehicle Type Distribution</div>
+                <div class="chart-card-sub">Percentage breakdown from detector output</div>
+              </div>
+            </div>
+            <div id="type-dist" style="padding:var(--space-2) 0"></div>
+          </div>
+
+          <!-- Traffic Density -->
+          <div class="chart-card animate-fade-in delay-2">
+            <div class="chart-card-header">
+              <div>
+                <div class="chart-card-title">Traffic Density Analysis</div>
+                <div class="chart-card-sub">Derived from tracked vehicle counts</div>
+              </div>
+            </div>
+            <div id="density-section" style="display:flex;flex-direction:column;gap:var(--space-4)">
+            </div>
+          </div>
+
+          <!-- Direction (if available) -->
+          <div class="chart-card animate-fade-in delay-3" id="direction-card" style="display:none">
+            <div class="chart-card-header">
+              <div class="chart-card-title">Vehicle Flow Direction</div>
+            </div>
+            <div id="direction-section"></div>
+          </div>
+        </div>
+
+        <!-- Right: summary -->
+        <div style="display:flex;flex-direction:column;gap:var(--space-5)">
+
+          <div class="chart-card animate-fade-in delay-1">
+            <div class="chart-card-header">
+              <div class="chart-card-title">Session Info</div>
+            </div>
+            <div id="session-info" style="display:flex;flex-direction:column;gap:10px"></div>
+          </div>
+
+          <div class="chart-card animate-fade-in delay-2">
+            <div class="chart-card-header">
+              <div class="chart-card-title">Traffic Metrics</div>
+            </div>
+            <div id="traffic-metrics" style="display:flex;flex-direction:column;gap:10px"></div>
+          </div>
+
+          <div class="chart-card animate-fade-in delay-3">
+            <div class="chart-card-header">
+              <div class="chart-card-title">Speed Analysis</div>
+            </div>
+            <div id="speed-section" style="display:flex;flex-direction:column;gap:10px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/js/auth.js"></script>
+<script src="/js/api-client.js"></script>
+<script src="/js/shell.js"></script>
+<script>
+if (!Auth.requireAuth()) throw new Error('Not authenticated');
+document.addEventListener('DOMContentLoaded', () => {
+  renderShell('Vehicle Analytics');
+  loadSessions();
+});
+
+const sessionSelect = document.getElementById('session-select');
+sessionSelect.addEventListener('change', () => {
+  const id = sessionSelect.value;
+  if (id) loadAnalytics(id);
+  else showEmpty();
+});
+
+async function loadSessions() {
+  try {
+    const history = await ApiClient.getHistory();
+    const completed = history.filter(h => h.status === 'completed');
+    completed.forEach(h => {
+      const sid = h.sessionId || h.session_id;
+      const opt = document.createElement('option');
+      opt.value = sid;
+      const fname = (h.filename || '').length > 24 ? (h.filename || '').slice(0, 21) + '...' : (h.filename || 'Session');
+      opt.textContent = `${fname} (${formatDate(h.date)})`;
+      opt.title = h.filename || '';
+      sessionSelect.appendChild(opt);
+    });
+    const urlSid = new URLSearchParams(window.location.search).get('session') || new URLSearchParams(window.location.search).get('sessionId');
+    if (urlSid && completed.some(h => (h.sessionId || h.session_id) === urlSid)) {
+      sessionSelect.value = urlSid;
+      loadAnalytics(urlSid);
+    } else if (completed.length > 0) {
+      const firstSid = completed[0].sessionId || completed[0].session_id;
+      sessionSelect.value = firstSid;
+      loadAnalytics(firstSid);
+    } else {
+      showEmpty();
+    }
+  } catch (err) {
+    Toast.error('Load failed', err.message);
+    showEmpty();
+  }
+}
+
+function showEmpty() {
+  document.getElementById('empty-analytics').style.display = 'block';
+  document.getElementById('analytics-content').style.display = 'none';
+}
+
+async function loadAnalytics(sessionId) {
+  try {
+    const res = await ApiClient.getResult(sessionId);
+    if (!res.report) { showEmpty(); return; }
+    renderAnalytics(res.report);
+  } catch (err) {
+    Toast.error('Load failed', err.message);
+    showEmpty();
+  }
+}
+
+function statRow(label, value) {
+  return `<div class="surv-stat-item"><span class="surv-stat-label">${label}</span><span class="font-medium" style="color:var(--text-primary);font-size:0.875rem">${value ?? 'N/A'}</span></div>`;
+}
+
+function renderAnalytics(report) {
+  document.getElementById('empty-analytics').style.display = 'none';
+  document.getElementById('analytics-content').style.display = 'block';
+
+  const v = report.vehicle_counts || report.vehicles || {};
+  const total   = report.total_vehicles ?? report.total_unique ?? 0;
+  const active  = report.active_now ?? 0;
+  const car     = v.car ?? report.cars ?? 0;
+  const moto    = v.motorcycle ?? report.motorcycles ?? 0;
+  const auto    = v.auto ?? v.auto_rickshaw ?? report.auto_rickshaws ?? 0;
+  const bus     = v.bus ?? report.buses ?? 0;
+  const truck   = v.truck ?? report.trucks ?? 0;
+
+  // Stat cards — REAL values only
+  const statsGrid = document.getElementById('analytics-stats');
+  const statCards = [
+    { label:'Total Vehicles', val: total, color:'var(--accent)', icon:'🚗' },
+    { label:'Active Now', val: active, color:'var(--success)', icon:'⚡' },
+    { label:'Cars', val: car, color:'var(--car-color)', icon:'🚙' },
+    { label:'Motorcycles', val: moto, color:'var(--motorcycle-color)', icon:'🏍' },
+    { label:'Autos', val: auto, color:'var(--auto-color)', icon:'🛺' },
+    { label:'Buses', val: bus, color:'var(--bus-color)', icon:'🚌' },
+    { label:'Trucks', val: truck, color:'var(--truck-color)', icon:'🚛' },
+  ];
+  statsGrid.innerHTML = statCards.map((c,i) => `
+    <div class="stat-card animate-fade-in delay-${i+1}">
+      <div class="stat-card-top">
+        <span class="stat-card-label">${c.label}</span>
+        <span style="font-size:1.2rem">${c.icon}</span>
+      </div>
+      <div class="stat-card-value" style="color:${c.color}">${c.val}</div>
+    </div>`).join('');
+
+  // Vehicle distribution bars
+  const dists = [
+    { label:'CAR', val: car, color:'var(--car-color)' },
+    { label:'MOTORCYCLE', val: moto, color:'var(--motorcycle-color)' },
+    { label:'AUTO-RICKSHAW', val: auto, color:'var(--auto-color)' },
+    { label:'BUS', val: bus, color:'var(--bus-color)' },
+    { label:'TRUCK', val: truck, color:'var(--truck-color)' },
+  ];
+  const distEl = document.getElementById('type-dist');
+  distEl.innerHTML = dists.map(d => {
+    const pct = total > 0 ? ((d.val / total) * 100).toFixed(1) : 0;
+    return `
+      <div class="vdist-row" style="margin-bottom:14px">
+        <div class="vdist-label">${d.label}</div>
+        <div class="vdist-bar-wrap" style="height:8px">
+          <div class="vdist-bar-fill" style="background:${d.color};width:${pct}%"></div>
+        </div>
+        <div class="vdist-count">${d.val} <span style="color:var(--text-dim);font-weight:400">(${pct}%)</span></div>
+      </div>`;
+  }).join('');
+
+  // Density section
+  const density = report.traffic_density || report.traffic || {};
+  const level = density.level || density.density || 'N/A';
+  const avgA = density.average_active ?? density.average_active_vehicles ?? null;
+  const peakA = density.peak_active ?? density.peak_active_vehicles ?? null;
+  const cls = { LOW:'badge-success', MEDIUM:'badge-warning', HIGH:'badge-error', SEVERE:'badge-error' };
+  document.getElementById('density-section').innerHTML = `
+    ${statRow('Traffic Level', `<span class="badge ${cls[level]||'badge-muted'}">${level}</span>`)}
+    ${statRow('Average Active Vehicles', avgA != null ? avgA.toFixed(2) : 'N/A')}
+    ${statRow('Peak Active Vehicles', peakA ?? 'N/A')}
+    ${statRow('Video Duration', formatDuration(report.video_duration))}
+    ${statRow('Frames Processed', report.frames_processed ?? 'N/A')}
+    ${statRow('Processing FPS', report.processing_fps != null ? report.processing_fps.toFixed(1) + ' fps' : 'N/A')}`;
+
+  // Direction
+  const dc = report.direction_counts || {};
+  const up = dc.UP ?? 0, down = dc.DOWN ?? 0, unk = dc.UNKNOWN ?? 0;
+  if (up > 0 || down > 0) {
+    document.getElementById('direction-card').style.display = 'block';
+    document.getElementById('direction-section').innerHTML = `
+      ${statRow('Going Up', up)}
+      ${statRow('Going Down', down)}
+      ${statRow('Unknown', unk)}`;
+  }
+
+  // Session info
+  document.getElementById('session-info').innerHTML = `
+    ${statRow('Session ID', `<span class="font-mono text-xs">${report.session_id || 'N/A'}</span>`)}
+    ${statRow('Video File', report.video?.split(/[\\/]/).pop() || 'N/A')}
+    ${statRow('Model', report.model_source || 'UVH-26 YOLOv11-S')}
+    ${statRow('Tracker', report.configuration?.tracker || 'ByteTrack')}
+    ${statRow('Confidence', report.configuration?.detect_confidence != null ? (report.configuration.detect_confidence * 100).toFixed(0) + '%' : 'N/A')}`;
+
+  // Traffic metrics
+  document.getElementById('traffic-metrics').innerHTML = `
+    ${statRow('Processing Time', formatDuration(report.processing_time_seconds))}
+    ${statRow('Frame Stride', report.configuration?.frame_stride ?? 'N/A')}
+    ${statRow('Image Size', report.configuration?.image_size ? report.configuration.image_size + 'px' : 'N/A')}`;
+
+  // Speed
+  const sp = report.speed || {};
+  document.getElementById('speed-section').innerHTML = `
+    ${statRow('Average Speed (px/s)', sp.average_pixels_per_second != null ? sp.average_pixels_per_second.toFixed(1) : 'N/A')}
+    ${statRow('Average Speed (km/h)', sp.average_kmh != null ? sp.average_kmh.toFixed(1) + ' km/h' : 'N/A — camera not calibrated')}
+    ${statRow('Real km/h Enabled', sp.real_kmh_enabled ? 'Yes' : 'No (calibrate METERS_PER_PIXEL)')}`;
+}
+</script>
+</body>
+</html>

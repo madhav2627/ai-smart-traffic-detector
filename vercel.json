@@ -1,0 +1,30 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "version": 2,
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "outputDirectory": "frontend",
+  "rewrites": [
+    { "source": "/login", "destination": "/login.html" },
+    { "source": "/register", "destination": "/register.html" },
+    { "source": "/dashboard", "destination": "/pages/dashboard.html" },
+    { "source": "/surveillance", "destination": "/pages/surveillance.html" },
+    { "source": "/cameras", "destination": "/pages/cameras.html" },
+    { "source": "/live", "destination": "/pages/live.html" },
+    { "source": "/analytics", "destination": "/pages/analytics.html" },
+    { "source": "/traffic-ai", "destination": "/pages/traffic-ai.html" },
+    { "source": "/history", "destination": "/pages/history.html" },
+    { "source": "/reports", "destination": "/pages/reports.html" },
+    { "source": "/settings", "destination": "/pages/settings.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-XSS-Protection", "value": "1; mode=block" }
+      ]
+    }
+  ]
+}

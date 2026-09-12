@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Surveillance — SURVILLENCE TRAFFIC</title>
+  <link rel="stylesheet" href="/css/design-system.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/pages.css">
+</head>
+<body class="app-shell">
+
+<div class="app-content">
+  <main class="page-main">
+
+    <!-- Page Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-5)" class="animate-fade-in">
+      <div>
+        <h2>Surveillance</h2>
+        <p class="text-sm text-muted" style="margin-top:4px">Process traffic videos using the AI detection engine</p>
+      </div>
+      <div style="display:flex;gap:var(--space-3);align-items:center">
+        <span id="session-badge" class="badge badge-muted" style="font-family:var(--font-mono);font-size:0.7rem"></span>
+      </div>
+    </div>
+
+    <!-- Upload Section (shown when no session active) -->
+    <div id="upload-section" class="animate-fade-in">
+      <div class="upload-zone" id="drop-zone" role="button" tabindex="0" aria-label="Upload video file">
+        <svg class="upload-zone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <div class="upload-zone-title">Drop your traffic video here</div>
+        <div class="upload-zone-sub">or <span style="color:var(--accent-light);cursor:pointer" id="browse-link">browse to select</span></div>
+        <div style="margin-top:var(--space-3)" class="text-xs text-muted">Supports MP4, AVI, MOV, MKV, WebM · Max 2 GB</div>
+      </div>
+      <input type="file" id="video-input" accept=".mp4,.avi,.mov,.mkv,.webm,.m4v" style="display:none" aria-label="Select video file">
+
+      <!-- Selected file preview -->
+      <div id="file-preview" style="display:none;margin-top:var(--space-4)">
+        <div class="card" style="display:flex;align-items:center;gap:var(--space-4)">
+          <div style="width:44px;height:44px;background:var(--accent-glow);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent-light)" stroke-width="2" style="width:22px;height:22px"><rect x="2" y="2" width="20" height="20" rx="2"/><polygon points="10,8 16,12 10,16"/></svg>
+          </div>
+          <div style="flex:1;overflow:hidden">
+            <div id="file-name" class="font-medium truncate" style="font-size:0.9rem"></div>
+            <div id="file-size" class="text-xs text-muted" style="margin-top:2px"></div>
+          </div>
+          <div style="display:flex;gap:var(--space-2)">
+            <button id="clear-file" class="btn btn-ghost btn-icon btn-sm" aria-label="Remove file">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <button id="start-analysis" class="btn btn-primary">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Start Analysis
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Processing Section (shown during analysis) -->
+    <div id="processing-section" style="display:none" class="animate-fade-in">
+      <div class="card" style="margin-bottom:var(--space-4)">
+        <div style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-4)">
+          <div class="loading-spinner"></div>
+          <div>
+            <div class="font-semibold" id="proc-title">Processing video...</div>
+            <div class="text-xs text-muted" id="proc-file"></div>
+          </div>
+          <button id="cancel-btn" class="btn btn-ghost btn-sm ml-auto">Cancel</button>
+        </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill indeterminate" id="proc-progress"></div>
+        </div>
+        <div class="processing-terminal" id="terminal" style="margin-top:var(--space-4)"></div>
+      </div>
+    </div>
+
+    <!-- Results Section (shown after completion) -->
+    <div id="results-section" style="display:none">
+
+      <!-- Status bar above video -->
+      <div style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-3);flex-wrap:wrap" class="animate-fade-in">
+        <span id="result-status-badge" class="badge badge-success">Analysis Complete</span>
+        <span id="result-file-label" class="text-sm text-muted"></span>
+        <span id="result-date-label" class="text-xs text-dim ml-auto"></span>
+        <button id="new-analysis-btn" class="btn btn-secondary btn-sm">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          New Analysis
+        </button>
+      </div>
+
+      <div class="surveillance-grid">
+        <!-- Video Player Column -->
+        <div class="surveillance-video-col">
+          <div class="video-player-wrap">
+            <video id="result-video" controls preload="metadata">
+              Your browser does not support HTML5 video.
+            </video>
+            <div class="video-overlay-label" id="video-label">
+              <span class="dot"></span>
+              PROCESSED VIDEO
+            </div>
+          </div>
+
+          <!-- Video bottom stats bar -->
+          <div class="surveillance-mini-stats">
+            <div class="surv-stat-item surv-mini-chip">
+              <div class="surv-stat-label">TOTAL</div>
+              <div class="surv-stat-value" id="bar-total">—</div>
+            </div>
+            <div class="surv-stat-item surv-mini-chip">
+              <div class="surv-stat-label">ACTIVE</div>
+              <div class="surv-stat-value" id="bar-active">—</div>
+            </div>
+            <div class="surv-stat-item surv-mini-chip">
+              <div class="surv-stat-label">CAR</div>
+              <div class="surv-stat-value vc-car" id="bar-car">—</div>
+            </div>
+            <div class="surv-stat-item surv-mini-chip">
+              <div class="surv-stat-label">MOTO</div>
+              <div class="surv-stat-value vc-motorcycle" id="bar-moto">—</div>
+            </div>
+            <div class="surv-stat-item surv-mini-chip">
+              <div class="surv-stat-label">AUTO</div>
+              <div class="surv-stat-value vc-auto" id="bar-auto">—</div>
+            </div>
+            <div class="surv-stat-item surv-mini-chip">
+              <div class="surv-stat-label">BUS+TRK</div>
+              <div class="surv-stat-value vc-bus" id="bar-bt">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Stats Panel -->
+        <div class="surveillance-stats-panel">
+          <div style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-dim);margin-bottom:var(--space-2)">Detection Results</div>
+
+          <div class="surv-stat-item">
+            <span class="surv-stat-label"><span class="dot" style="background:var(--success)"></span>Total Unique</span>
+            <span class="surv-stat-value" id="s-total">—</span>
+          </div>
+          <div class="surv-stat-item">
+            <span class="surv-stat-label"><span class="dot" style="background:var(--accent)"></span>Active (End)</span>
+            <span class="surv-stat-value" id="s-active">—</span>
+          </div>
+          <div class="surv-stat-item">
+            <span class="surv-stat-label"><span class="dot" style="background:var(--car-color)"></span>Cars</span>
+            <span class="surv-stat-value vc-car" id="s-car">—</span>
+          </div>
+          <div class="surv-stat-item">
+            <span class="surv-stat-label"><span class="dot" style="background:var(--motorcycle-color)"></span>Motorcycles</span>
+            <span class="surv-stat-value vc-motorcycle" id="s-moto">—</span>
+          </div>
+          <div class="surv-stat-item">
+            <span class="surv-stat-label"><span class="dot" style="background:var(--auto-color)"></span>Autos</span>
+            <span class="surv-stat-value vc-auto" id="s-auto">—</span>
+          </div>
+          <div class="surv-stat-item">
+            <span class="surv-stat-label"><span class="dot" style="background:var(--bus-color)"></span>Buses</span>
+            <span class="surv-stat-value vc-bus" id="s-bus">—</span>
+          </div>
+          <div class="surv-stat-item">
+            <span class="surv-stat-label"><span class="dot" style="background:var(--truck-color)"></span>Trucks</span>
+            <span class="surv-stat-value vc-truck" id="s-truck">—</span>
+          </div>
+
+          <div style="border-top:1px solid var(--border-default);margin:var(--space-2) 0"></div>
+
+          <div class="surv-stat-item">
+            <span class="surv-stat-label">Traffic Level</span>
+            <span class="badge" id="s-density">N/A</span>
+          </div>
+          <div class="surv-stat-item">
+            <span class="surv-stat-label">Avg Speed</span>
+            <span class="surv-stat-value" id="s-speed" style="font-size:0.85rem">N/A</span>
+          </div>
+          <div class="surv-stat-item">
+            <span class="surv-stat-label">Video Duration</span>
+            <span class="surv-stat-value" id="s-duration" style="font-size:0.85rem">—</span>
+          </div>
+          <div class="surv-stat-item">
+            <span class="surv-stat-label">Proc. Time</span>
+            <span class="surv-stat-value" id="s-proctime" style="font-size:0.85rem">—</span>
+          </div>
+
+          <div style="border-top:1px solid var(--border-default);margin:var(--space-2) 0"></div>
+
+          <!-- Direction (only show if data available) -->
+          <div id="direction-panel" style="display:none">
+            <div style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-dim);margin-bottom:var(--space-2)">Direction</div>
+            <div class="surv-stat-item"><span class="surv-stat-label">Up</span><span id="s-dir-up">—</span></div>
+            <div class="surv-stat-item"><span class="surv-stat-label">Down</span><span id="s-dir-down">—</span></div>
+            <div class="surv-stat-item"><span class="surv-stat-label">Unknown</span><span id="s-dir-unk">—</span></div>
+          </div>
+
+          <!-- Download report -->
+          <button id="dl-report-btn" class="btn btn-secondary w-full" style="margin-top:var(--space-2)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download JSON Report
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="/js/auth.js"></script>
+<script src="/js/api-client.js"></script>
+<script src="/js/shell.js"></script>
+<script>
+if (!Auth.requireAuth()) throw new Error('Not authenticated');
+document.addEventListener('DOMContentLoaded', () => {
+  renderShell('Surveillance');
+  initSurveillance();
+});
+
+let currentFile = null;
+let currentSessionId = null;
+let currentReport = null;
+let progressSource = null;
+
+function initSurveillance() {
+  const dropZone   = document.getElementById('drop-zone');
+  const fileInput  = document.getElementById('video-input');
+  const browseLink = document.getElementById('browse-link');
+  const clearFile  = document.getElementById('clear-file');
+  const startBtn   = document.getElementById('start-analysis');
+  const newBtn     = document.getElementById('new-analysis-btn');
+  const cancelBtn  = document.getElementById('cancel-btn');
+  const dlBtn      = document.getElementById('dl-report-btn');
+
+  browseLink.addEventListener('click', () => fileInput.click());
+  dropZone.addEventListener('click', () => fileInput.click());
+  dropZone.addEventListener('keydown', e => { if (e.key === 'Enter') fileInput.click(); });
+
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files[0]) setFile(fileInput.files[0]);
+  });
+
+  // Drag and drop
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    const f = e.dataTransfer.files[0];
+    if (f) setFile(f);
+  });
+
+  clearFile.addEventListener('click', clearSelection);
+  startBtn.addEventListener('click', startAnalysis);
+  cancelBtn.addEventListener('click', cancelAnalysis);
+  newBtn.addEventListener('click', resetToUpload);
+  dlBtn.addEventListener('click', downloadReport);
+
+  // Check for session or camera in URL or active processing job
+  const params = new URLSearchParams(window.location.search);
+  const sessionId = params.get('session');
+  const cameraId = params.get('camera');
+  if (cameraId) {
+    loadLiveCamera(cameraId);
+  } else if (sessionId) {
+    loadExistingSession(sessionId);
+  } else {
+    checkActiveJob();
+  }
+}
+
+async function checkActiveJob() {
+  try {
+    const res = await ApiClient.getActiveJob();
+    if (res && res.job && res.job.sessionId) {
+      currentSessionId = res.job.sessionId;
+      showProcessing(res.job.filename || 'Processing...');
+      document.getElementById('session-badge').textContent = res.job.sessionId;
+      appendTerminalLine(`Reconnected to active session: ${res.job.sessionId}`);
+      startProgressStream(res.job.sessionId);
+    }
+  } catch {}
+}
+
+function setFile(f) {
+  const allowed = ['video/mp4','video/avi','video/quicktime','video/x-matroska','video/webm','video/x-msvideo','video/x-m4v'];
+  // Also allow by extension if MIME is generic
+  const ext = f.name.split('.').pop().toLowerCase();
+  const allowedExt = ['mp4','avi','mov','mkv','webm','m4v'];
+  if (!allowed.includes(f.type) && !allowedExt.includes(ext)) {
+    Toast.error('Invalid file type', 'Please select a video file (MP4, AVI, MOV, MKV, WebM)');
+    return;
+  }
+  currentFile = f;
+  document.getElementById('file-name').textContent = f.name;
+  document.getElementById('file-size').textContent = formatBytes(f.size);
+  document.getElementById('file-preview').style.display = 'block';
+}
+
+function clearSelection() {
+  currentFile = null;
+  document.getElementById('file-preview').style.display = 'none';
+  document.getElementById('video-input').value = '';
+}
+
+async function startAnalysis() {
+  if (!currentFile) { Toast.warning('No file selected', 'Please select a video file first.'); return; }
+
+  try {
+    await ApiClient.health();
+  } catch {
+    Toast.error('Server Offline', 'The local server is not running. Please start START.bat first.');
+    return;
+  }
+
+  // Check if already processing (before upload to avoid wasting bandwidth)
+  try {
+    const activeRes = await ApiClient.getActiveJob();
+    if (activeRes && activeRes.job) {
+      Toast.warning('Already Processing', 'An analysis is already running. Please wait for it to complete before starting a new one.');
+      // Switch to show the active job's progress
+      currentSessionId = activeRes.job.sessionId;
+      showProcessing(activeRes.job.filename || 'Processing...');
+      document.getElementById('session-badge').textContent = activeRes.job.sessionId;
+      startProgressStream(activeRes.job.sessionId);
+      return;
+    }
+  } catch {}
+
+  showProcessing(currentFile.name);
+  appendTerminalLine('Uploading video to local server...');
+
+  try {
+    const res = await ApiClient.analyze(currentFile);
+    currentSessionId = res.session_id;
+    document.getElementById('session-badge').textContent = res.session_id;
+    appendTerminalLine(`Session: ${res.session_id}`);
+    startProgressStream(res.session_id);
+  } catch (err) {
+    // Handle 409 explicitly
+    if (err.message && err.message.includes('already in progress')) {
+      Toast.warning('Already Processing', err.message);
+      resetToUpload();
+    } else {
+      showError(err.message);
+    }
+  }
+}
+
+function startProgressStream(sessionId) {
+  if (progressSource) progressSource.close();
+  progressSource = ApiClient.progressStream(sessionId);
+
+  progressSource.onmessage = (e) => {
+    const msg = e.data;
+    if (msg === '__DONE__') {
+      progressSource.close();
+      fetchResult(sessionId);
+      return;
+    }
+    appendTerminalLine(msg);
+
+    // Update progress title based on messages
+    if (msg.includes('Pass 1')) updateProcTitle('Pass 1: Detecting & tracking vehicles...');
+    if (msg.includes('Pass 2')) updateProcTitle('Pass 2: Rendering annotated video...');
+    if (msg.includes('Re-encoding')) updateProcTitle('Encoding web-compatible video...');
+    if (msg.includes('completed')) updateProcTitle('Analysis completed!');
+  };
+
+  progressSource.onerror = () => {
+    progressSource.close();
+    // Try polling the result
+    setTimeout(() => fetchResult(sessionId), 2000);
+  };
+}
+
+async function fetchResult(sessionId) {
+  try {
+    const res = await ApiClient.getResult(sessionId);
+    if (res.status === 'completed' && res.report) {
+      currentReport = res.report;
+      showResults(sessionId, res.report);
+      Toast.success('Analysis complete', 'Vehicle detection finished successfully.');
+    } else if (res.status === 'failed') {
+      showError('Analysis failed. Check the terminal output.');
+    } else {
+      // Still processing — try again
+      setTimeout(() => fetchResult(sessionId), 3000);
+    }
+  } catch (err) {
+    showError(err.message);
+  }
+}
+
+function showResults(sessionId, report, videoAvailable = true) {
+  document.getElementById('upload-section').style.display = 'none';
+  document.getElementById('processing-section').style.display = 'none';
+  document.getElementById('results-section').style.display = 'block';
+
+  // Video availability check
+  const vidWrap = document.querySelector('.video-player-wrap');
+  const vid = document.getElementById('result-video');
+
+  // Remove any previous unavailable notice
+  const existing = vidWrap.querySelector('.video-unavailable-notice');
+  if (existing) existing.remove();
+
+  if (videoAvailable !== false) {
+    vid.style.display = 'block';
+    document.getElementById('video-label').style.display = 'flex';
+    vid.src = ApiClient.videoUrl(sessionId);
+  } else {
+    // Video has been rotated out — show notice instead of broken player
+    vid.style.display = 'none';
+    document.getElementById('video-label').style.display = 'none';
+    const notice = document.createElement('div');
+    notice.className = 'video-unavailable-notice';
+    notice.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;flex-shrink:0">
+        <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/>
+        <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/>
+        <line x1="1" y1="1" x2="23" y2="23"/>
+      </svg>
+      <span>Original video no longer stored. The system keeps only the most recent physical video. Report data is fully preserved.</span>
+    `;
+    vidWrap.appendChild(notice);
+  }
+
+  // Stats from REAL detector output
+  const v = report.vehicle_counts || report.vehicles || {};
+  const set = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val != null ? val : '—';
+  };
+
+  const total  = report.total_vehicles ?? report.total_unique ?? '—';
+  const active = report.active_now ?? '—';
+  const car    = v.car ?? report.cars ?? '—';
+  const moto   = v.motorcycle ?? report.motorcycles ?? '—';
+  const auto   = v.auto ?? v.auto_rickshaw ?? report.auto_rickshaws ?? '—';
+  const bus    = v.bus ?? report.buses ?? '—';
+  const truck  = v.truck ?? report.trucks ?? '—';
+
+  set('s-total', total); set('bar-total', total);
+  set('s-active', active); set('bar-active', active);
+  set('s-car', car); set('bar-car', car);
+  set('s-moto', moto); set('bar-moto', moto);
+  set('s-auto', auto); set('bar-auto', auto);
+  set('s-bus', bus);
+  set('s-truck', truck);
+  // Bus + Truck combined in bottom bar
+  const bt = ((typeof bus==='number'?bus:0) + (typeof truck==='number'?truck:0)) || '—';
+  set('bar-bt', bt);
+
+  // Traffic density
+  const density = report.traffic_density?.level || report.traffic?.density || 'N/A';
+  const densityEl = document.getElementById('s-density');
+  if (densityEl) {
+    densityEl.textContent = density;
+    const cls = { LOW:'badge-success', MEDIUM:'badge-warning', HIGH:'badge-error', SEVERE:'badge-error' };
+    densityEl.className = 'badge ' + (cls[density] || 'badge-muted');
+  }
+
+  // Speed — only show km/h if available, otherwise N/A
+  const kmh = report.speed?.average_kmh;
+  const pxs = report.speed?.average_pixels_per_second;
+  set('s-speed', kmh != null ? kmh.toFixed(1) + ' km/h' : (pxs ? pxs.toFixed(0) + ' px/s' : 'N/A'));
+
+  // Duration and processing time
+  set('s-duration', formatDuration(report.video_duration));
+  set('s-proctime', formatDuration(report.processing_time_seconds));
+
+  // Direction (only if we have up or down data)
+  const dc = report.direction_counts || {};
+  const up = dc.UP ?? report.direction?.up ?? 0;
+  const down = dc.DOWN ?? report.direction?.down ?? 0;
+  const unk = dc.UNKNOWN ?? 0;
+  if (up > 0 || down > 0) {
+    document.getElementById('direction-panel').style.display = 'block';
+    set('s-dir-up', up);
+    set('s-dir-down', down);
+    set('s-dir-unk', unk);
+  }
+
+  // File label
+  const fname = currentFile?.name || report.video?.split(/[\\/]/).pop() || '—';
+  document.getElementById('result-file-label').textContent = fname;
+}
+
+function downloadReport() {
+  if (!currentReport) { Toast.warning('No report', 'Run an analysis first.'); return; }
+  const blob = new Blob([JSON.stringify(currentReport, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `survillence_report_${currentSessionId || Date.now()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function showProcessing(filename) {
+  document.getElementById('upload-section').style.display = 'none';
+  document.getElementById('results-section').style.display = 'none';
+  document.getElementById('processing-section').style.display = 'block';
+  document.getElementById('proc-file').textContent = filename;
+  document.getElementById('terminal').innerHTML = '';
+}
+
+function updateProcTitle(msg) {
+  document.getElementById('proc-title').textContent = msg;
+}
+
+function appendTerminalLine(msg) {
+  const term = document.getElementById('terminal');
+  if (!term) return;
+  const line = document.createElement('div');
+  line.className = 'line' + (msg.includes('Error') || msg.includes('failed') ? ' line-error' : '') + (msg.includes('completed') ? ' line-done' : '');
+  line.textContent = msg;
+  term.appendChild(line);
+  term.scrollTop = term.scrollHeight;
+}
+
+function showError(msg) {
+  document.getElementById('upload-section').style.display = 'none';
+  document.getElementById('processing-section').style.display = 'none';
+  document.getElementById('results-section').style.display = 'none';
+
+  appendTerminalLine('[ERROR] ' + msg);
+  document.getElementById('processing-section').style.display = 'block';
+  document.getElementById('proc-title').textContent = 'Analysis failed';
+  document.getElementById('proc-title').style.color = 'var(--error)';
+  Toast.error('Analysis failed', msg);
+}
+
+function cancelAnalysis() {
+  if (progressSource) progressSource.close();
+  resetToUpload();
+  Toast.info('Cancelled', 'Analysis was cancelled.');
+}
+
+let liveCamPollTimer = null;
+let currentCamera = null;
+
+async function loadLiveCamera(cameraId) {
+  try {
+    const cam = await ApiClient.getCamera(cameraId);
+    currentCamera = cam;
+    document.getElementById('upload-section').style.display = 'none';
+    document.getElementById('processing-section').style.display = 'none';
+    document.getElementById('results-section').style.display = 'block';
+
+    // Set header labels
+    document.getElementById('session-badge').textContent = `CAM: ${cam.name}`;
+    const statusBadge = document.getElementById('result-status-badge');
+    statusBadge.className = 'badge badge-success';
+    statusBadge.innerHTML = `<span class="dot" style="background:var(--success)"></span> LIVE CCTV: ${cam.name}`;
+
+    document.getElementById('result-file-label').textContent = `${cam.type} · ${cam.streamUrl}`;
+    document.getElementById('result-date-label').textContent = 'Live Feed (Real-Time)';
+
+    // Adjust "New Analysis" button to allow switching back to recorded upload
+    const newBtn = document.getElementById('new-analysis-btn');
+    newBtn.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/></svg>
+      Switch to Upload
+    `;
+
+    // Replace video player with live stream image
+    const vidWrap = document.querySelector('.video-player-wrap');
+    const vid = document.getElementById('result-video');
+    vid.style.display = 'none';
+    vid.pause();
+
+    // Clear any previous live img or notices
+    const oldImg = vidWrap.querySelector('#camera-live-stream-img');
+    if (oldImg) oldImg.remove();
+    const existingNotice = vidWrap.querySelector('.video-unavailable-notice');
+    if (existingNotice) existingNotice.remove();
+
+    const videoLabel = document.getElementById('video-label');
+    videoLabel.style.display = 'flex';
+    videoLabel.innerHTML = '<span class="dot"></span> LIVE CCTV';
+
+    const streamImg = document.createElement('img');
+    streamImg.id = 'camera-live-stream-img';
+    streamImg.alt = `${cam.name} Live Stream`;
+    streamImg.style.maxWidth = '100%';
+    streamImg.style.maxHeight = '340px';
+    streamImg.style.width = 'auto';
+    streamImg.style.height = 'auto';
+    streamImg.style.display = 'block';
+    streamImg.style.objectFit = 'contain';
+    streamImg.style.borderRadius = 'var(--radius-md)';
+    streamImg.src = ApiClient.cameraStreamUrl(cameraId);
+
+    streamImg.onerror = () => {
+      statusBadge.className = 'badge badge-error';
+      statusBadge.innerHTML = `<span class="dot" style="background:var(--error)"></span> NO SIGNAL`;
+      videoLabel.innerHTML = '<span class="dot" style="background:var(--error)"></span> OFFLINE';
+    };
+
+    vidWrap.appendChild(streamImg);
+
+    // Initial stats poll & periodic refresh
+    pollCameraStats(cameraId);
+    if (liveCamPollTimer) clearInterval(liveCamPollTimer);
+    liveCamPollTimer = setInterval(() => pollCameraStats(cameraId), 1500);
+
+  } catch (err) {
+    Toast.error('Camera Error', err.message);
+    resetToUpload();
+  }
+}
+
+async function pollCameraStats(cameraId) {
+  try {
+    const stats = await ApiClient.getCameraStats(cameraId);
+    const set = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = val != null ? val : '—';
+    };
+    set('s-total', stats.total_unique); set('bar-total', stats.total_unique);
+    set('s-active', stats.active_now); set('bar-active', stats.active_now);
+    set('s-car', stats.cars); set('bar-car', stats.cars);
+    set('s-moto', stats.motorcycles); set('bar-moto', stats.motorcycles);
+    set('s-auto', stats.autos); set('bar-auto', stats.autos);
+    set('s-bus', stats.buses);
+    set('s-truck', stats.trucks);
+    set('bar-bt', (stats.buses || 0) + (stats.trucks || 0));
+  } catch {}
+}
+
+function resetToUpload() {
+  if (liveCamPollTimer) {
+    clearInterval(liveCamPollTimer);
+    liveCamPollTimer = null;
+  }
+  const streamImg = document.getElementById('camera-live-stream-img');
+  if (streamImg) streamImg.remove();
+  const vid = document.getElementById('result-video');
+  if (vid) {
+    vid.style.display = 'block';
+    vid.pause();
+    vid.src = '';
+  }
+  const videoLabel = document.getElementById('video-label');
+  if (videoLabel) {
+    videoLabel.innerHTML = '<span class="dot"></span> PROCESSED VIDEO';
+  }
+  const newBtn = document.getElementById('new-analysis-btn');
+  if (newBtn) {
+    newBtn.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      New Analysis
+    `;
+  }
+  if (window.history.replaceState && new URLSearchParams(window.location.search).has('camera')) {
+    window.history.replaceState({}, '', '/pages/surveillance.html');
+  }
+  currentFile = null;
+  currentSessionId = null;
+  currentReport = null;
+  currentCamera = null;
+  if (progressSource) progressSource.close();
+  document.getElementById('upload-section').style.display = 'block';
+  document.getElementById('processing-section').style.display = 'none';
+  document.getElementById('results-section').style.display = 'none';
+  document.getElementById('file-preview').style.display = 'none';
+  document.getElementById('video-input').value = '';
+  document.getElementById('session-badge').textContent = '';
+}
+
+async function loadExistingSession(sessionId) {
+  currentSessionId = sessionId;
+  document.getElementById('session-badge').textContent = sessionId;
+  try {
+    const res = await ApiClient.getResult(sessionId);
+    if (res.status === 'completed' && res.report) {
+      currentReport = res.report;
+      // Pass videoAvailable so the player shows proper state
+      const videoAvail = res.videoAvailable !== false;
+      showResults(sessionId, res.report, videoAvail);
+      document.getElementById('result-status-badge').textContent = 'Previous Analysis';
+      if (!videoAvail) {
+        document.getElementById('result-status-badge').className = 'badge badge-warning';
+        document.getElementById('result-status-badge').textContent = 'History — Video Replaced';
+      }
+    } else if (res.status === 'processing') {
+      showProcessing('Resuming session...');
+      startProgressStream(sessionId);
+    } else {
+      Toast.warning('Session not found', 'Could not load session: ' + sessionId);
+    }
+  } catch (err) {
+    Toast.error('Load failed', err.message);
+  }
+}
+</script>
+</body>
+</html>

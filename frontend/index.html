@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SURVILLENCE TRAFFIC — AI Traffic Surveillance & Vehicle Analytics</title>
+  <meta name="description" content="State-of-the-art AI traffic surveillance and real-time vehicle detection running 100% locally with UVH-26 YOLOv11-S and ByteTrack.">
+  <link rel="stylesheet" href="/css/design-system.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/pages.css">
+</head>
+<body>
+
+<!-- ── Navigation ─────────────────────────────────────────────── -->
+<nav class="landing-nav">
+  <a href="/" class="landing-logo">
+    <div class="landing-logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 10l4.553-2.069A1 1 0 0121 8.866V19a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h3.5"/><circle cx="9" cy="9" r="3"/></svg>
+    </div>
+    <span class="landing-logo-text">SURVILLENCE TRAFFIC</span>
+  </a>
+  <div class="landing-nav-links">
+    <a href="#features">Features</a>
+    <a href="#how-it-works">How It Works</a>
+    <a href="#vehicles">Vehicle Matrix</a>
+    <a href="#metrics">System Architecture</a>
+  </div>
+  <div class="landing-nav-actions">
+    <a href="/login.html" class="btn btn-ghost btn-sm">Sign In</a>
+    <a href="/register.html" class="btn btn-primary btn-sm" style="box-shadow:0 0 16px rgba(56,189,248,0.25)">Launch Console</a>
+    <button class="landing-hamburger-btn" id="landing-menu-toggle" aria-label="Toggle navigation menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+  </div>
+</nav>
+
+<!-- Mobile Navigation Drawer -->
+<div class="landing-mobile-drawer" id="landing-mobile-drawer">
+  <div class="landing-drawer-header">
+    <span class="font-semibold text-sm">SURVILLENCE TRAFFIC</span>
+    <button class="modal-close" id="landing-drawer-close" aria-label="Close menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="landing-drawer-links">
+    <a href="#features" class="drawer-link">Features</a>
+    <a href="#how-it-works" class="drawer-link">How It Works</a>
+    <a href="#vehicles" class="drawer-link">Vehicle Matrix</a>
+    <a href="#metrics" class="drawer-link">System Architecture</a>
+    <div style="border-top:1px solid var(--border-default);margin:var(--space-3) 0"></div>
+    <a href="/login.html" class="btn btn-secondary w-full" style="justify-content:center">Sign In</a>
+    <a href="/register.html" class="btn btn-primary w-full" style="justify-content:center;margin-top:8px">Launch Console</a>
+  </div>
+</div>
+<div class="landing-drawer-overlay" id="landing-drawer-overlay"></div>
+
+<!-- ── Hero Section ───────────────────────────────────────────── -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid-pattern"></div>
+
+  <div class="hero-eyebrow animate-fade-in">
+    <span class="dot"></span>
+    UVH-26 YOLOv11-S + ByteTrack · 100% Local Inference
+  </div>
+
+  <h1 class="animate-fade-in">
+    Next-Gen <span class="highlight">Traffic Surveillance</span><br>&amp; Real-Time AI Intelligence
+  </h1>
+
+  <p class="hero-sub animate-fade-in delay-1">
+    Analyze high-density urban traffic footage, identify 5 vehicle classes with persistent tracking, compute traffic density, and export forensic reports — all processed privately on your local hardware.
+  </p>
+
+  <div class="hero-actions animate-fade-in delay-2">
+    <a href="/register.html" class="btn btn-primary btn-xl" style="box-shadow:0 0 30px rgba(56,189,248,0.3)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Launch Analysis Console
+    </a>
+    <a href="/login.html" class="btn btn-secondary btn-xl" style="backdrop-filter:blur(10px)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:17px;height:17px"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Operator Dashboard
+    </a>
+  </div>
+
+  <!-- ── High-End AI Surveillance Console Preview ── -->
+  <div class="hero-cockpit-container animate-fade-in delay-3">
+    <!-- Ambient mesh glow halo -->
+    <div class="hero-cockpit-halo"></div>
+
+    <div class="hero-cockpit-frame">
+      <!-- Cockpit Topbar -->
+      <div class="cockpit-topbar">
+        <div class="cockpit-window-controls">
+          <span class="ctrl-dot red"></span>
+          <span class="ctrl-dot yellow"></span>
+          <span class="ctrl-dot green"></span>
+        </div>
+        <div class="cockpit-title-badge">
+          <span class="status-dot online"></span>
+          <span>UVH-26 YOLOv11-S // SURVEILLANCE CONSOLE</span>
+        </div>
+        <div class="cockpit-telemetry-meta">
+          <span class="meta-tag"><span class="meta-pulse"></span>LOCAL INFERENCE</span>
+          <span class="meta-tag">BYTETRACK</span>
+          <span class="meta-tag">0 CLOUD APIS</span>
+        </div>
+      </div>
+
+      <!-- Cockpit Main Visual Viewport -->
+      <div class="cockpit-viewport">
+        <img src="/assets/right_side.png" alt="Live AI Traffic Surveillance" class="cockpit-img">
+        
+        <!-- Animated HUD Laser Scan Line -->
+        <div class="cockpit-scanline"></div>
+
+        <!-- Cybernetic Corner Reticles -->
+        <div class="reticle top-left"></div>
+        <div class="reticle top-right"></div>
+        <div class="reticle bottom-left"></div>
+        <div class="reticle bottom-right"></div>
+
+        <!-- Floating Glass Telemetry Badges (Truthful Specifications) -->
+        <div class="hud-pill hud-pill-top-left">
+          <div class="hud-pill-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </div>
+          <div>
+            <div class="hud-pill-label">DETECTION ENGINE</div>
+            <div class="hud-pill-val">UVH-26 YOLOv11-S</div>
+          </div>
+        </div>
+
+        <div class="hud-pill hud-pill-top-right">
+          <div class="hud-pill-icon confidence">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <div>
+            <div class="hud-pill-label">TRACKING SYSTEM</div>
+            <div class="hud-pill-val">ByteTrack Multi-Object</div>
+          </div>
+        </div>
+
+        <div class="hud-pill hud-pill-bottom-left">
+          <div class="hud-pill-icon vehicles">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div>
+            <div class="hud-pill-label">EXECUTION MODE</div>
+            <div class="hud-pill-val">100% Local Hardware</div>
+          </div>
+        </div>
+
+        <div class="hud-pill hud-pill-bottom-right">
+          <div class="hud-pill-icon speed">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </div>
+          <div>
+            <div class="hud-pill-label">CLOUD DEPENDENCY</div>
+            <div class="hud-pill-val">None</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cockpit Bottom Console Supported Classes Bar -->
+      <div class="cockpit-bottom-bar">
+        <div class="cockpit-stat-chip">
+          <span class="chip-dot" style="background:var(--car-color)"></span>
+          <span class="chip-name">CARS</span>
+          <span class="chip-val">Hatch / Sedan / SUV</span>
+        </div>
+        <div class="cockpit-stat-chip">
+          <span class="chip-dot" style="background:var(--motorcycle-color)"></span>
+          <span class="chip-name">MOTORCYCLES</span>
+          <span class="chip-val">Two-Wheelers</span>
+        </div>
+        <div class="cockpit-stat-chip">
+          <span class="chip-dot" style="background:var(--auto-color)"></span>
+          <span class="chip-name">AUTOS</span>
+          <span class="chip-val">Three-Wheelers</span>
+        </div>
+        <div class="cockpit-stat-chip">
+          <span class="chip-dot" style="background:var(--bus-color)"></span>
+          <span class="chip-name">BUSES</span>
+          <span class="chip-val">Bus &amp; Mini-Bus</span>
+        </div>
+        <div class="cockpit-stat-chip">
+          <span class="chip-dot" style="background:var(--truck-color)"></span>
+          <span class="chip-name">TRUCKS</span>
+          <span class="chip-val">Truck &amp; LCV</span>
+        </div>
+        <div class="cockpit-stat-chip" style="background:rgba(16,185,129,0.08);border-color:rgba(16,185,129,0.25)">
+          <span class="chip-name" style="color:#34d399">INFERENCE</span>
+          <span class="badge badge-success" style="font-size:0.65rem;padding:2px 8px">100% LOCAL</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Metrics Strip (Truthful Technical Architecture) ────────── -->
+<section class="metrics-strip" id="metrics">
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-value" style="font-size:2rem;color:var(--success)">None</div>
+      <div class="metric-label">Cloud Dependency</div>
+      <div class="metric-sub">100% private, runs entirely on your local machine</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value" style="font-size:2rem;color:var(--accent-light)">UVH-26</div>
+      <div class="metric-label">Local AI Engine</div>
+      <div class="metric-sub">YOLOv11-S model trained on Indian traffic datasets</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value" style="font-size:2rem;color:var(--info)">ByteTrack</div>
+      <div class="metric-label">Tracking Pipeline</div>
+      <div class="metric-sub">Kalman filter multi-object trajectory association</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value" style="font-size:2rem;color:var(--text-primary)">5 Classes</div>
+      <div class="metric-label">Normalized Categories</div>
+      <div class="metric-sub">Cars, Motorcycles, Autos, Buses, and Trucks</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Features Grid ─────────────────────────────────────────── -->
+<section class="features-section" id="features">
+  <div style="text-align:center;max-width:680px;margin:0 auto">
+    <div class="section-eyebrow">Platform Capabilities</div>
+    <h2 style="font-size:2.2rem;font-weight:800;color:#fff">Engineered for High-Density Traffic Intelligence</h2>
+    <p style="margin-top:12px;color:var(--text-muted);font-size:1rem;line-height:1.7">
+      From raw roadside camera footage to structured forensic telemetry. Every metric is computed strictly from real detector output — zero fabrication.
+    </p>
+  </div>
+
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(56,189,248,0.12);color:#38bdf8;border:1px solid rgba(56,189,248,0.3)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      </div>
+      <div class="feature-title">UVH-26 YOLOv11-S Detection</div>
+      <p class="feature-desc">Fine-tuned specifically for dense heterogeneous traffic. Detects cars, two-wheelers, auto-rickshaws, buses, and trucks with high precision even in crowded lanes.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(16,185,129,0.12);color:#34d399;border:1px solid rgba(16,185,129,0.3)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 10l4.553-2.069A1 1 0 0121 8.866V19a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h3.5"/><circle cx="9" cy="9" r="3"/></svg>
+      </div>
+      <div class="feature-title">ByteTrack Persistent Tracking</div>
+      <p class="feature-desc">Associates bounding boxes across frames using Kalman filters. Eliminates duplicate counts from temporary occlusions, ensuring rock-solid unique vehicle counts.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(245,158,11,0.12);color:#fbbf24;border:1px solid rgba(245,158,11,0.3)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      </div>
+      <div class="feature-title">Traffic Density &amp; Flow Analysis</div>
+      <p class="feature-desc">Calculates real-time traffic congestion levels (Low, Medium, High, Severe) and computes vehicle flow velocities to pinpoint traffic bottlenecks.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(129,140,248,0.12);color:#a78bfa;border:1px solid rgba(129,140,248,0.3)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg>
+      </div>
+      <div class="feature-title">Automated Class Normalization</div>
+      <p class="feature-desc">Standardizes 14 granular training categories (hatchback, sedan, SUV, van, three-wheeler, etc.) into clean actionable operational categories.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(244,114,182,0.12);color:#f472b6;border:1px solid rgba(244,114,182,0.3)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      </div>
+      <div class="feature-title">Live Subprocess Streaming</div>
+      <p class="feature-desc">Watch model inference execute frame-by-frame. Server-Sent Events (SSE) stream stdout logs into a sleek embedded console terminal in real time.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(99,102,241,0.12);color:#818cf8;border:1px solid rgba(99,102,241,0.3)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      </div>
+      <div class="feature-title">Forensic Reports &amp; History</div>
+      <p class="feature-desc">Every run generates a persistent JSON report and web-optimized MP4. Review past sessions, compare traffic patterns across dates, and download one-click JSON audits.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── Interactive Vehicle Class Matrix ──────────────────────── -->
+<section class="features-section" id="vehicles" style="padding-top:40px">
+  <div style="text-align:center;max-width:680px;margin:0 auto">
+    <div class="section-eyebrow">Interactive Matrix</div>
+    <h2 style="font-size:2.2rem;font-weight:800;color:#fff">Interactive Vehicle Detection Classes</h2>
+    <p style="margin-top:12px;color:var(--text-muted);font-size:0.95rem">
+      Explore how our detector classifies and tracks diverse vehicle types across Indian roads.
+    </p>
+  </div>
+
+  <div class="class-showcase-box">
+    <div class="class-tabs">
+      <button class="class-tab active" data-target="car">
+        <span class="chip-dot" style="background:var(--car-color)"></span>
+        Cars &amp; Sedans
+      </button>
+      <button class="class-tab" data-target="motorcycle">
+        <span class="chip-dot" style="background:var(--motorcycle-color)"></span>
+        Motorcycles &amp; 2-Wheelers
+      </button>
+      <button class="class-tab" data-target="auto">
+        <span class="chip-dot" style="background:var(--auto-color)"></span>
+        Auto-Rickshaws (3W)
+      </button>
+      <button class="class-tab" data-target="bus">
+        <span class="chip-dot" style="background:var(--bus-color)"></span>
+        Buses &amp; Transit
+      </button>
+      <button class="class-tab" data-target="truck">
+        <span class="chip-dot" style="background:var(--truck-color)"></span>
+        Trucks &amp; Heavy Commercial
+      </button>
+    </div>
+
+    <div class="class-content-body" id="class-display-box">
+      <!-- Injected by JS -->
+    </div>
+  </div>
+</section>
+
+<!-- ── How It Works ─────────────────────────────────────────── -->
+<section class="how-it-works" id="how-it-works">
+  <div style="max-width:960px;margin:0 auto;text-align:center">
+    <div class="section-eyebrow">Architecture</div>
+    <h2 style="font-size:2.2rem;font-weight:800;color:#fff">End-to-End Processing Pipeline</h2>
+    <p style="margin-top:12px;color:var(--text-muted);font-size:0.95rem">
+      Four seamless stages turn raw video files into actionable surveillance intelligence.
+    </p>
+
+    <div class="steps-row">
+      <div class="step-item">
+        <div class="step-num">STAGE 01</div>
+        <div class="step-title">Video Ingestion</div>
+        <p class="step-desc">Drag and drop local MP4, AVI, or MOV files up to 2 GB. Stored securely on your disk.</p>
+      </div>
+      <div class="step-item">
+        <div class="step-num">STAGE 02</div>
+        <div class="step-title">AI Inference</div>
+        <p class="step-desc">UVH-26 YOLOv11-S detects vehicles per frame while ByteTrack assigns unique continuous IDs.</p>
+      </div>
+      <div class="step-item">
+        <div class="step-num">STAGE 03</div>
+        <div class="step-title">Video Synthesis</div>
+        <p class="step-desc">A second pass renders high-definition bounding boxes, trajectory trails, and web-ready MP4 encoding.</p>
+      </div>
+      <div class="step-item">
+        <div class="step-num">STAGE 04</div>
+        <div class="step-title">Actionable Telemetry</div>
+        <p class="step-desc">Inspect analytics dashboards, replay annotated footage, and download full forensic JSON reports.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Call to Action ─────────────────────────────────────────── -->
+<section class="cta-section">
+  <div class="cta-glow-bg"></div>
+  <div style="position:relative;z-index:1;max-width:680px;margin:0 auto">
+    <div class="section-eyebrow">Instant Deployment</div>
+    <h2 style="font-size:2.4rem;font-weight:800;color:#fff;margin-bottom:16px">Ready to Deploy Local AI Surveillance?</h2>
+    <p style="color:var(--text-muted);margin-bottom:var(--space-8);font-size:1.05rem;line-height:1.7">
+      No API keys required. No cloud subscription. Everything runs private and secure on your machine.
+    </p>
+    <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap">
+      <a href="/register.html" class="btn btn-primary btn-xl" style="box-shadow:0 0 35px rgba(56,189,248,0.35)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        Create Free Account
+      </a>
+      <a href="/login.html" class="btn btn-secondary btn-xl">Operator Sign In</a>
+    </div>
+  </div>
+</section>
+
+<!-- ── Footer ─────────────────────────────────────────────────── -->
+<footer class="landing-footer">
+  <div class="footer-text">
+    <strong style="color:var(--text-secondary)">SURVILLENCE TRAFFIC</strong> — Local AI Surveillance Platform
+  </div>
+  <div class="footer-text" style="display:flex;gap:24px;flex-wrap:wrap">
+    <span>UVH-26 YOLOv11-S</span>
+    <span>ByteTrack Persistent IDs</span>
+    <span>Zero Cloud Dependency</span>
+    <span>100% Private</span>
+  </div>
+</footer>
+
+<script src="/js/auth.js"></script>
+<script>
+  // Redirect if already logged in
+  if (Auth.isAuthenticated()) {
+    const loginBtns = document.querySelectorAll('a[href="/login.html"]');
+    const getStartedBtns = document.querySelectorAll('a[href="/register.html"]');
+    loginBtns.forEach(btn => { btn.href = '/pages/dashboard.html'; btn.textContent = 'Go to Dashboard'; });
+    getStartedBtns.forEach(btn => { btn.href = '/pages/surveillance.html'; btn.textContent = 'Open Surveillance'; });
+  }
+
+  // Interactive Class Showcase Data (Truthful Specifications)
+  const classData = {
+    car: {
+      title: 'Cars & Four-Wheelers',
+      color: 'var(--car-color)',
+      desc: 'Primary private vehicular traffic class. Includes compact hatchbacks, sedans, luxury SUVs, and urban multi-utility vehicles.',
+      sources: ['Car', 'Hatchback', 'Sedan', 'SUV / MUV', 'Van'],
+      engine: 'UVH-26 YOLOv11-S',
+      tracker: 'ByteTrack Multi-Object',
+      confFilter: 'Threshold ≥ 0.20',
+      densityImpact: 'High road occupancy'
+    },
+    motorcycle: {
+      title: 'Motorcycles & Two-Wheelers',
+      color: 'var(--motorcycle-color)',
+      desc: 'High-frequency agile commuters. Navigates lane gaps and dense congestion with rapid acceleration patterns.',
+      sources: ['Motorcycle', 'Scooter', 'Two-Wheeler'],
+      engine: 'UVH-26 YOLOv11-S',
+      tracker: 'ByteTrack Low-Score Match',
+      confFilter: 'Threshold ≥ 0.20',
+      densityImpact: 'Frequent lane filtering'
+    },
+    auto: {
+      title: 'Auto-Rickshaws (Three-Wheelers)',
+      color: 'var(--auto-color)',
+      desc: 'Distinctive Indian urban transit vehicles with unique yellow/green silhouette profiles and sharp turning dynamics.',
+      sources: ['Auto-Rickshaw', 'Three-Wheeler', 'Tuk-Tuk'],
+      engine: 'UVH-26 YOLOv11-S',
+      tracker: 'ByteTrack Geometry Tracking',
+      confFilter: 'Threshold ≥ 0.20',
+      densityImpact: 'Stop-and-go curb stops'
+    },
+    bus: {
+      title: 'Buses & Mass Transit',
+      color: 'var(--bus-color)',
+      desc: 'Heavy passenger transit vehicles requiring large bounding box estimation and lane tracking in mixed corridor streams.',
+      sources: ['City Bus', 'Mini-Bus', 'Coach'],
+      engine: 'UVH-26 YOLOv11-S',
+      tracker: 'ByteTrack Kalman Filter',
+      confFilter: 'Threshold ≥ 0.20',
+      densityImpact: 'Major lane blockage'
+    },
+    truck: {
+      title: 'Trucks & Heavy Logistics',
+      color: 'var(--truck-color)',
+      desc: 'Commercial freight haulers and light commercial trucks (LCVs) with heavy braking profiles and long vehicle footprints.',
+      sources: ['Truck', 'LCV', 'Multi-Axle'],
+      engine: 'UVH-26 YOLOv11-S',
+      tracker: 'ByteTrack Trajectory Link',
+      confFilter: 'Threshold ≥ 0.20',
+      densityImpact: 'High inertia flow restrictor'
+    }
+  };
+
+  function renderClassDetails(key) {
+    const d = classData[key] || classData.car;
+    const box = document.getElementById('class-display-box');
+    if (!box) return;
+    box.innerHTML = `
+      <div>
+        <div class="class-info-h">
+          <span style="width:14px;height:14px;border-radius:50%;background:${d.color};box-shadow:0 0 10px ${d.color};display:inline-block"></span>
+          ${d.title}
+        </div>
+        <p style="color:var(--text-muted);font-size:0.92rem;line-height:1.7;margin:0 0 16px">${d.desc}</p>
+        <div style="font-size:0.75rem;font-weight:700;letter-spacing:0.06em;color:var(--text-dim);text-transform:uppercase">UVH-26 Source Classes Mapped:</div>
+        <div class="class-tag-list">
+          ${d.sources.map(s => `<span class="class-tag">${s}</span>`).join('')}
+        </div>
+      </div>
+      <div class="class-metrics-grid">
+        <div class="class-metric-box">
+          <div class="class-metric-title">Model Backbone</div>
+          <div class="class-metric-value" style="color:${d.color};font-size:1.05rem">${d.engine}</div>
+        </div>
+        <div class="class-metric-box">
+          <div class="class-metric-title">Tracking Pipeline</div>
+          <div class="class-metric-value" style="font-size:0.92rem;color:#fff">${d.tracker}</div>
+        </div>
+        <div class="class-metric-box">
+          <div class="class-metric-title">Detector Filter</div>
+          <div class="class-metric-value" style="font-size:0.95rem;color:#fff">${d.confFilter}</div>
+        </div>
+        <div class="class-metric-box">
+          <div class="class-metric-title">Traffic Dynamics</div>
+          <div class="class-metric-value" style="font-size:0.85rem;color:var(--text-secondary)">${d.densityImpact}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  document.querySelectorAll('.class-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.class-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      renderClassDetails(tab.dataset.target);
+    });
+  });
+
+  // Initial render
+  renderClassDetails('car');
+
+  // Mobile menu drawer handlers
+  const menuToggle = document.getElementById('landing-menu-toggle');
+  const drawer = document.getElementById('landing-mobile-drawer');
+  const drawerOverlay = document.getElementById('landing-drawer-overlay');
+  const drawerClose = document.getElementById('landing-drawer-close');
+
+  function openLandingDrawer() {
+    if (drawer) drawer.classList.add('open');
+    if (drawerOverlay) drawerOverlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLandingDrawer() {
+    if (drawer) drawer.classList.remove('open');
+    if (drawerOverlay) drawerOverlay.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  if (menuToggle) menuToggle.addEventListener('click', openLandingDrawer);
+  if (drawerClose) drawerClose.addEventListener('click', closeLandingDrawer);
+  if (drawerOverlay) drawerOverlay.addEventListener('click', closeLandingDrawer);
+  document.querySelectorAll('.drawer-link').forEach(link => {
+    link.addEventListener('click', closeLandingDrawer);
+  });
+</script>
+</body>
+</html>

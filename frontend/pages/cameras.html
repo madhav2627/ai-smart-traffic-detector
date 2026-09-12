@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CCTV Connectivity — SURVILLENCE TRAFFIC</title>
+  <link rel="stylesheet" href="/css/design-system.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/pages.css">
+</head>
+<body class="app-shell">
+
+<div class="app-content">
+  <main class="page-main">
+
+    <!-- Page Header -->
+    <div class="page-header-row animate-fade-in" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-5);flex-wrap:wrap;gap:var(--space-3)">
+      <div>
+        <h2>CCTV Connectivity</h2>
+        <p class="text-sm text-muted" style="margin-top:4px">Local IP camera and RTSP surveillance feed management</p>
+      </div>
+      <div style="display:flex;gap:var(--space-3);align-items:center">
+        <button id="add-cam-btn" class="btn btn-primary btn-sm">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Camera
+        </button>
+      </div>
+    </div>
+
+    <!-- Summary / System Specs Strip -->
+    <div class="stats-grid" id="cctv-stats-strip" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin-bottom:var(--space-5)">
+      <div class="stat-card animate-fade-in delay-1">
+        <div class="stat-card-top">
+          <span class="stat-card-label">Configured Cameras</span>
+          <div class="stat-card-icon" style="background:rgba(59,130,246,0.1)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent-light)" stroke-width="2" style="width:16px;height:16px"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+          </div>
+        </div>
+        <div class="stat-card-value" id="stat-total-cams">0</div>
+        <div class="stat-card-footer">Registered local sources</div>
+      </div>
+
+      <div class="stat-card animate-fade-in delay-2">
+        <div class="stat-card-top">
+          <span class="stat-card-label">Online Status</span>
+          <div class="stat-card-icon" style="background:rgba(16,185,129,0.1)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2" style="width:16px;height:16px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 14"/></svg>
+          </div>
+        </div>
+        <div class="stat-card-value text-success" id="stat-online-cams">0</div>
+        <div class="stat-card-footer">Active verified signals</div>
+      </div>
+
+      <div class="stat-card animate-fade-in delay-3">
+        <div class="stat-card-top">
+          <span class="stat-card-label">Detection Engine</span>
+          <div class="stat-card-icon" style="background:rgba(99,102,241,0.1)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--info)" stroke-width="2" style="width:16px;height:16px"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </div>
+        </div>
+        <div class="stat-card-value" style="font-size:1.15rem;padding-top:4px">UVH-26 S</div>
+        <div class="stat-card-footer">ByteTrack Multi-Object</div>
+      </div>
+
+      <div class="stat-card animate-fade-in delay-4">
+        <div class="stat-card-top">
+          <span class="stat-card-label">Cloud Dependency</span>
+          <div class="stat-card-icon" style="background:rgba(16,185,129,0.1)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2" style="width:16px;height:16px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+        </div>
+        <div class="stat-card-value" style="font-size:1.15rem;padding-top:4px">None (Local)</div>
+        <div class="stat-card-footer">100% Private Processing</div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="cams-loading" class="card" style="text-align:center;padding:var(--space-8)">
+      <div style="display:flex;align-items:center;justify-content:center;gap:var(--space-3)">
+        <div class="loading-spinner"></div>
+        <span class="text-sm text-muted">Scanning camera interfaces...</span>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div id="cams-empty" class="card animate-fade-in" style="display:none;text-align:center;padding:var(--space-12)">
+      <div class="empty-state">
+        <div class="empty-state-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:36px;height:36px"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+        </div>
+        <div class="empty-state-title">No CCTV Cameras Configured</div>
+        <div class="empty-state-desc" style="max-width:480px;margin:0 auto">
+          Connect your local RTSP streams, IP cameras, or USB webcams. The local UVH-26 YOLOv11-S detection engine processes surveillance feeds securely without cloud dependencies.
+        </div>
+        <button class="btn btn-primary" id="empty-add-btn" style="margin-top:var(--space-4)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Your First Camera
+        </button>
+      </div>
+    </div>
+
+    <!-- Camera Cards Grid -->
+    <div id="cams-grid" class="camera-management-grid animate-fade-in" style="display:none"></div>
+
+  </main>
+</div>
+
+<!-- ── Add / Edit Camera Modal ── -->
+<div class="modal-overlay" id="cam-modal">
+  <div class="modal" style="max-width:520px;width:100%">
+    <div class="modal-header">
+      <span class="modal-title" id="cam-modal-title">Configure Camera</span>
+      <button class="modal-close" id="modal-close-btn" aria-label="Close dialog">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <form id="cam-form" onsubmit="return false;" style="display:flex;flex-direction:column;gap:var(--space-4)">
+      <input type="hidden" id="form-cam-id" value="">
+
+      <div class="form-group">
+        <label class="form-label" for="form-cam-name">Camera Name</label>
+        <input class="form-input" type="text" id="form-cam-name" placeholder="e.g. Main Gate Camera" required>
+        <span class="form-hint">A human-readable label for this camera source</span>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="form-cam-type">Camera Type</label>
+        <select class="form-select" id="form-cam-type">
+          <option value="RTSP">RTSP Stream (IP Camera / NVR)</option>
+          <option value="IP Camera">IP Camera (HTTP / MJPEG)</option>
+          <option value="Webcam">Local Webcam (USB / Integrated)</option>
+          <option value="Local Camera">Local Device Node</option>
+          <option value="Other Supported Source">Other Local Stream</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="form-cam-url">Stream / Connection URL</label>
+        <input class="form-input font-mono text-sm" type="text" id="form-cam-url" placeholder="rtsp://192.168.1.100:554/stream or 0 for webcam" required>
+        <span class="form-hint" id="form-url-hint">For webcam: enter device index (0, 1). For RTSP: rtsp://&lt;ip&gt;:&lt;port&gt;/path</span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3)">
+        <div class="form-group">
+          <label class="form-label" for="form-cam-user">Username (Optional)</label>
+          <input class="form-input" type="text" id="form-cam-user" placeholder="admin">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="form-cam-port">Port (Optional)</label>
+          <input class="form-input" type="number" id="form-cam-port" placeholder="554">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="form-cam-pw">Password (Optional)</label>
+        <input class="form-input" type="password" id="form-cam-pw" placeholder="••••••••" autocomplete="new-password">
+        <span class="form-hint">Stored safely on local server; never transmitted to browser displays.</span>
+      </div>
+
+      <!-- Test Connection Result Display -->
+      <div id="modal-test-feedback" class="badge" style="display:none;padding:10px 14px;border-radius:var(--radius-md);width:100%;font-size:0.8rem"></div>
+
+      <div style="display:flex;gap:var(--space-3);justify-content:space-between;align-items:center;margin-top:var(--space-2);flex-wrap:wrap">
+        <button type="button" class="btn btn-secondary btn-sm" id="modal-test-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Test Connection
+        </button>
+
+        <div style="display:flex;gap:var(--space-2)">
+          <button type="button" class="btn btn-ghost btn-sm" id="modal-cancel-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm" id="modal-save-btn">Save Camera</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Delete Confirm Modal ── -->
+<div class="modal-overlay" id="del-cam-modal">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header">
+      <span class="modal-title">Remove Camera</span>
+      <button class="modal-close" id="del-close-btn" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <p class="text-sm" style="color:var(--text-secondary);margin-bottom:var(--space-5)">
+      Are you sure you want to remove this camera configuration? Its connection profile will be deleted from your local account.
+    </p>
+    <div style="display:flex;gap:var(--space-3);justify-content:flex-end">
+      <button class="btn btn-ghost" id="del-cancel-btn">Cancel</button>
+      <button class="btn btn-danger" id="del-confirm-btn">Delete Camera</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/auth.js"></script>
+<script src="/js/api-client.js"></script>
+<script src="/js/shell.js"></script>
+<script>
+if (!Auth.requireAuth()) throw new Error('Not authenticated');
+
+let camerasList = [];
+let pendingDeleteId = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderShell('CCTV Connectivity');
+  loadCameras();
+  setupModals();
+});
+
+async function loadCameras() {
+  const loading = document.getElementById('cams-loading');
+  const empty = document.getElementById('cams-empty');
+  const grid = document.getElementById('cams-grid');
+
+  loading.style.display = 'block';
+  empty.style.display = 'none';
+  grid.style.display = 'none';
+
+  try {
+    camerasList = await ApiClient.getCameras();
+    loading.style.display = 'none';
+
+    document.getElementById('stat-total-cams').textContent = camerasList.length;
+    const onlineCount = camerasList.filter(c => c.status === 'ONLINE').length;
+    document.getElementById('stat-online-cams').textContent = onlineCount;
+
+    if (camerasList.length === 0) {
+      empty.style.display = 'block';
+      return;
+    }
+
+    grid.style.display = 'grid';
+    renderCameraCards(camerasList);
+  } catch (err) {
+    loading.style.display = 'none';
+    empty.style.display = 'block';
+    Toast.error('Load Failed', err.message);
+  }
+}
+
+function renderCameraCards(cams) {
+  const grid = document.getElementById('cams-grid');
+  grid.innerHTML = cams.map(cam => {
+    const isOnline = cam.status === 'ONLINE';
+    const statusMap = {
+      'ONLINE': { cls: 'badge-success', dot: 'bg-success', label: 'ONLINE' },
+      'OFFLINE': { cls: 'badge-muted', dot: 'bg-muted', label: 'OFFLINE' },
+      'NO SIGNAL': { cls: 'badge-warning', dot: 'bg-warning', label: 'NO SIGNAL' },
+      'TIMEOUT': { cls: 'badge-error', dot: 'bg-error', label: 'TIMEOUT' },
+      'AUTHENTICATION ERROR': { cls: 'badge-error', dot: 'bg-error', label: 'AUTH ERROR' },
+      'CONNECTION ERROR': { cls: 'badge-error', dot: 'bg-error', label: 'CONN ERROR' },
+      'NOT CONFIGURED': { cls: 'badge-muted', dot: 'bg-muted', label: 'NOT CONFIGURED' },
+      'UNSUPPORTED STREAM': { cls: 'badge-warning', dot: 'bg-warning', label: 'UNSUPPORTED' },
+    };
+    const st = statusMap[cam.status] || { cls: 'badge-muted', dot: 'bg-muted', label: cam.status || 'UNKNOWN' };
+
+    return `
+      <div class="camera-card card animate-fade-in" id="cam-card-${cam.id}">
+        <div class="camera-card-header">
+          <div>
+            <div class="camera-name truncate font-semibold" title="${cam.name}">${cam.name}</div>
+            <span class="badge badge-muted text-xs" style="margin-top:4px">${cam.type}</span>
+          </div>
+          <span class="badge ${st.cls}" style="display:inline-flex;align-items:center;gap:6px">
+            <span class="dot ${st.dot} ${isOnline ? 'pulse' : ''}"></span>
+            ${st.label}
+          </span>
+        </div>
+
+        <div class="camera-card-body">
+          <div class="camera-meta-row">
+            <span class="text-xs text-muted">Stream URL:</span>
+            <span class="text-xs font-mono truncate" style="max-width:200px" title="${cam.streamUrl}">${cam.streamUrl}</span>
+          </div>
+          <div class="camera-meta-row">
+            <span class="text-xs text-muted">Resolution:</span>
+            <span class="text-xs font-medium">${cam.resolution || '—'}</span>
+          </div>
+          <div class="camera-meta-row">
+            <span class="text-xs text-muted">Frame Rate:</span>
+            <span class="text-xs font-medium">${cam.fps ? cam.fps + ' FPS' : '—'}</span>
+          </div>
+          <div class="camera-meta-row">
+            <span class="text-xs text-muted">Last Verified:</span>
+            <span class="text-xs text-dim">${cam.lastConnected ? formatDate(cam.lastConnected) : 'Never'}</span>
+          </div>
+        </div>
+
+        <div class="camera-card-actions">
+          ${isOnline
+            ? `<a href="/pages/surveillance.html?camera=${cam.id}" class="btn btn-primary btn-sm flex-1">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                Open Live Feed
+               </a>`
+            : `<button onclick="testCamera('${cam.id}')" class="btn btn-secondary btn-sm flex-1" id="test-btn-${cam.id}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                Test Connection
+               </button>`
+          }
+          <button onclick="editCamera('${cam.id}')" class="btn btn-ghost btn-sm btn-icon" title="Edit Camera" aria-label="Edit Camera">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button onclick="confirmDelete('${cam.id}')" class="btn btn-ghost btn-sm btn-icon" title="Remove Camera" aria-label="Remove Camera">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--error)" stroke-width="2" style="width:14px;height:14px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function testCamera(cameraId) {
+  const btn = document.getElementById(`test-btn-${cameraId}`);
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-spinner sm"></span> Probing...';
+  }
+
+  try {
+    const res = await ApiClient.testCamera(cameraId);
+    if (res.online) {
+      Toast.success('Connection Verified', `Camera is ONLINE at ${res.resolution || 'detected resolution'} (${res.fps || 25} FPS).`);
+    } else {
+      Toast.warning('Connection Status', res.error || `Status: ${res.status}`);
+    }
+    loadCameras();
+  } catch (err) {
+    Toast.error('Probe Error', err.message);
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = 'Test Connection';
+    }
+  }
+}
+
+function setupModals() {
+  const modal = document.getElementById('cam-modal');
+  const addBtn = document.getElementById('add-cam-btn');
+  const emptyAddBtn = document.getElementById('empty-add-btn');
+  const closeBtn = document.getElementById('modal-close-btn');
+  const cancelBtn = document.getElementById('modal-cancel-btn');
+  const form = document.getElementById('cam-form');
+  const testBtn = document.getElementById('modal-test-btn');
+  const feedback = document.getElementById('modal-test-feedback');
+
+  function openAddModal() {
+    document.getElementById('cam-modal-title').textContent = 'Add CCTV / IP Camera';
+    document.getElementById('form-cam-id').value = '';
+    form.reset();
+    feedback.style.display = 'none';
+    modal.classList.add('open');
+  }
+
+  function closeModal() {
+    modal.classList.remove('open');
+  }
+
+  if (addBtn) addBtn.addEventListener('click', openAddModal);
+  if (emptyAddBtn) emptyAddBtn.addEventListener('click', openAddModal);
+  if (closeBtn) closeBtn.addEventListener('click', closeModal);
+  if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+
+  // Update URL placeholder based on type
+  document.getElementById('form-cam-type').addEventListener('change', function() {
+    const hint = document.getElementById('form-url-hint');
+    const input = document.getElementById('form-cam-url');
+    if (this.value === 'Webcam') {
+      input.placeholder = '0';
+      hint.textContent = 'Enter local device index (0 for default webcam, 1 for second webcam).';
+    } else if (this.value === 'RTSP') {
+      input.placeholder = 'rtsp://192.168.1.100:554/stream';
+      hint.textContent = 'Enter valid RTSP URL from your IP camera or NVR.';
+    } else {
+      input.placeholder = 'http://192.168.1.100:8080/video';
+      hint.textContent = 'Enter local stream URL.';
+    }
+  });
+
+  // Modal Test Connection
+  testBtn.addEventListener('click', async () => {
+    const url = document.getElementById('form-cam-url').value.trim();
+    const type = document.getElementById('form-cam-type').value;
+    const user = document.getElementById('form-cam-user').value.trim();
+    const pw = document.getElementById('form-cam-pw').value;
+    const port = document.getElementById('form-cam-port').value;
+
+    if (!url && type !== 'Webcam') {
+      Toast.warning('Missing Stream URL', 'Please enter a stream URL to test.');
+      return;
+    }
+
+    testBtn.disabled = true;
+    testBtn.innerHTML = '<span class="loading-spinner sm"></span> Testing...';
+    feedback.style.display = 'none';
+
+    try {
+      const res = await ApiClient.testCameraRaw({
+        streamUrl: url,
+        type: type,
+        username: user,
+        password: pw,
+        port: port,
+      });
+
+      testBtn.disabled = false;
+      testBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Test Connection';
+      feedback.style.display = 'block';
+
+      if (res.online) {
+        feedback.className = 'badge badge-success';
+        feedback.textContent = `Connected! ${res.resolution || ''} ${res.fps ? res.fps + ' FPS' : ''} (Signal Verified)`;
+      } else {
+        feedback.className = 'badge badge-error';
+        feedback.textContent = `Failed: ${res.error || res.status}`;
+      }
+    } catch (err) {
+      testBtn.disabled = false;
+      testBtn.innerHTML = 'Test Connection';
+      feedback.style.display = 'block';
+      feedback.className = 'badge badge-error';
+      feedback.textContent = err.message;
+    }
+  });
+
+  // Form Save
+  form.addEventListener('submit', async () => {
+    const camId = document.getElementById('form-cam-id').value;
+    const data = {
+      name: document.getElementById('form-cam-name').value.trim(),
+      type: document.getElementById('form-cam-type').value,
+      streamUrl: document.getElementById('form-cam-url').value.trim(),
+      username: document.getElementById('form-cam-user').value.trim(),
+      password: document.getElementById('form-cam-pw').value,
+      port: document.getElementById('form-cam-port').value || null,
+    };
+
+    if (!data.name) { Toast.warning('Validation', 'Please enter a camera name.'); return; }
+    if (!data.streamUrl && data.type !== 'Webcam') { Toast.warning('Validation', 'Please enter a stream URL.'); return; }
+
+    const saveBtn = document.getElementById('modal-save-btn');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving...';
+
+    try {
+      if (camId) {
+        await ApiClient.updateCamera(camId, data);
+        Toast.success('Saved', 'Camera configuration updated.');
+      } else {
+        await ApiClient.createCamera(data);
+        Toast.success('Created', 'New camera registered successfully.');
+      }
+      closeModal();
+      loadCameras();
+    } catch (err) {
+      Toast.error('Save Failed', err.message);
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Save Camera';
+    }
+  });
+
+  // Delete Modal setup
+  const delModal = document.getElementById('del-cam-modal');
+  const delClose = document.getElementById('del-close-btn');
+  const delCancel = document.getElementById('del-cancel-btn');
+  const delConfirm = document.getElementById('del-confirm-btn');
+
+  function closeDelModal() {
+    delModal.classList.remove('open');
+    pendingDeleteId = null;
+  }
+  delClose.addEventListener('click', closeDelModal);
+  delCancel.addEventListener('click', closeDelModal);
+  delModal.addEventListener('click', e => { if (e.target === delModal) closeDelModal(); });
+
+  delConfirm.addEventListener('click', async () => {
+    if (!pendingDeleteId) return;
+    try {
+      await ApiClient.deleteCamera(pendingDeleteId);
+      Toast.success('Deleted', 'Camera configuration removed.');
+      closeDelModal();
+      loadCameras();
+    } catch (err) {
+      Toast.error('Delete Failed', err.message);
+    }
+  });
+}
+
+function editCamera(cameraId) {
+  const cam = camerasList.find(c => c.id === cameraId || c.cameraId === cameraId);
+  if (!cam) return;
+
+  document.getElementById('cam-modal-title').textContent = 'Edit Camera Configuration';
+  document.getElementById('form-cam-id').value = cam.id;
+  document.getElementById('form-cam-name').value = cam.name || '';
+  document.getElementById('form-cam-type').value = cam.type || 'RTSP';
+  document.getElementById('form-cam-url').value = cam.streamUrl || '';
+  document.getElementById('form-cam-user').value = cam.username || '';
+  document.getElementById('form-cam-port').value = cam.port || '';
+  document.getElementById('form-cam-pw').value = '';
+  document.getElementById('modal-test-feedback').style.display = 'none';
+
+  document.getElementById('cam-modal').classList.add('open');
+}
+
+function confirmDelete(cameraId) {
+  pendingDeleteId = cameraId;
+  document.getElementById('del-cam-modal').classList.add('open');
+}
+</script>
+</body>
+</html>

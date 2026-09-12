@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Traffic AI — SURVILLENCE TRAFFIC</title>
+  <link rel="stylesheet" href="/css/design-system.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/pages.css">
+</head>
+<body class="app-shell">
+<div class="app-content">
+  <main class="page-main">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-5)" class="animate-fade-in">
+      <div>
+        <h2>Traffic AI</h2>
+        <p class="text-sm text-muted" style="margin-top:4px">AI-derived insights from detection data</p>
+      </div>
+      <select class="form-select" id="session-select" style="width:280px">
+        <option value="">Select analysis session...</option>
+      </select>
+    </div>
+
+    <!-- Empty state -->
+    <div id="ai-empty" class="card" style="text-align:center;padding:var(--space-12)" class="animate-fade-in">
+      <div class="empty-state">
+        <div class="empty-state-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        </div>
+        <div class="empty-state-title">No AI insights available yet</div>
+        <div class="empty-state-desc">Insights are derived only from real detector output. Run an analysis to generate traffic intelligence.</div>
+        <a href="/pages/surveillance.html" class="btn btn-primary" style="margin-top:var(--space-4)">Start Analysis</a>
+      </div>
+    </div>
+
+    <!-- Insights content -->
+    <div id="ai-content" style="display:none">
+
+      <!-- Headline insight cards -->
+      <div class="stats-grid" id="insight-cards" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr));margin-bottom:var(--space-6)"></div>
+
+      <div class="content-grid">
+        <!-- Left: detailed insights -->
+        <div style="display:flex;flex-direction:column;gap:var(--space-5)">
+
+          <div class="chart-card animate-fade-in delay-1">
+            <div class="chart-card-header">
+              <div class="chart-card-title">Traffic Density Assessment</div>
+            </div>
+            <div id="density-insight"></div>
+          </div>
+
+          <div class="chart-card animate-fade-in delay-2">
+            <div class="chart-card-header">
+              <div class="chart-card-title">Vehicle Flow Analysis</div>
+            </div>
+            <div id="flow-insight"></div>
+          </div>
+
+          <div class="chart-card animate-fade-in delay-3">
+            <div class="chart-card-header">
+              <div class="chart-card-title">Detection Summary</div>
+            </div>
+            <div id="detection-summary"></div>
+          </div>
+        </div>
+
+        <!-- Right: quick stats -->
+        <div style="display:flex;flex-direction:column;gap:var(--space-5)">
+          <div class="chart-card animate-fade-in delay-1">
+            <div class="chart-card-header">
+              <div class="chart-card-title">Key Metrics</div>
+            </div>
+            <div id="key-metrics" style="display:flex;flex-direction:column;gap:10px"></div>
+          </div>
+
+          <div class="chart-card animate-fade-in delay-2">
+            <div class="chart-card-header">
+              <div class="chart-card-title">Vehicle Intelligence</div>
+            </div>
+            <div id="vehicle-intel" style="display:flex;flex-direction:column;gap:10px"></div>
+          </div>
+
+          <div class="chart-card animate-fade-in delay-3" id="speed-intel-card" style="display:none">
+            <div class="chart-card-header">
+              <div class="chart-card-title">Speed Intelligence</div>
+            </div>
+            <div id="speed-intel" style="display:flex;flex-direction:column;gap:10px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/js/auth.js"></script>
+<script src="/js/api-client.js"></script>
+<script src="/js/shell.js"></script>
+<script>
+if (!Auth.requireAuth()) throw new Error('Not authenticated');
+document.addEventListener('DOMContentLoaded', () => {
+  renderShell('Traffic AI');
+  loadSessions();
+});
+
+document.getElementById('session-select').addEventListener('change', function() {
+  if (this.value) loadInsights(this.value);
+  else showEmpty();
+});
+
+async function loadSessions() {
+  try {
+    const history = await ApiClient.getHistory();
+    const sel = document.getElementById('session-select');
+    const completed = history.filter(h => h.status === 'completed');
+    completed.forEach(h => {
+      const sid = h.sessionId || h.session_id;
+      const opt = document.createElement('option');
+      opt.value = sid;
+      opt.textContent = `${h.filename} — ${formatDate(h.date)}`;
+      sel.appendChild(opt);
+    });
+    const urlSid = new URLSearchParams(window.location.search).get('session') || new URLSearchParams(window.location.search).get('sessionId');
+    if (urlSid && completed.some(h => (h.sessionId || h.session_id) === urlSid)) {
+      sel.value = urlSid;
+      loadInsights(urlSid);
+    } else if (completed.length > 0) {
+      const firstSid = completed[0].sessionId || completed[0].session_id;
+      sel.value = firstSid;
+      loadInsights(firstSid);
+    } else {
+      showEmpty();
+    }
+  } catch {
+    showEmpty();
+  }
+}
+
+function showEmpty() {
+  document.getElementById('ai-empty').style.display = 'block';
+  document.getElementById('ai-content').style.display = 'none';
+}
+
+async function loadInsights(sessionId) {
+  try {
+    const res = await ApiClient.getResult(sessionId);
+    if (!res.report) { showEmpty(); return; }
+    renderInsights(res.report);
+  } catch (err) {
+    Toast.error('Load failed', err.message);
+    showEmpty();
+  }
+}
+
+function statRow(label, value) {
+  return `<div class="surv-stat-item"><span class="surv-stat-label">${label}</span><span class="font-medium" style="color:var(--text-primary);font-size:0.875rem">${value ?? 'N/A'}</span></div>`;
+}
+
+function renderInsights(report) {
+  document.getElementById('ai-empty').style.display = 'none';
+  document.getElementById('ai-content').style.display = 'block';
+
+  const v     = report.vehicle_counts || report.vehicles || {};
+  const total = report.total_vehicles ?? report.total_unique ?? 0;
+  const car   = v.car ?? report.cars ?? 0;
+  const moto  = v.motorcycle ?? report.motorcycles ?? 0;
+  const auto  = v.auto ?? v.auto_rickshaw ?? report.auto_rickshaws ?? 0;
+  const bus   = v.bus ?? report.buses ?? 0;
+  const truck = v.truck ?? report.trucks ?? 0;
+  const density = report.traffic_density || report.traffic || {};
+  const level   = density.level || density.density || 'N/A';
+  const avgA    = density.average_active ?? density.average_active_vehicles ?? null;
+  const peakA   = density.peak_active ?? density.peak_active_vehicles ?? null;
+  const active  = report.active_now ?? 0;
+
+  // Dominant vehicle
+  const counts = { Car: car, Motorcycle: moto, Auto: auto, Bus: bus, Truck: truck };
+  const dominant = Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];
+  const dominantPct = total > 0 && dominant ? ((dominant[1]/total)*100).toFixed(1) : null;
+
+  const levelCls = { LOW:'badge-success', MEDIUM:'badge-warning', HIGH:'badge-error', SEVERE:'badge-error' };
+
+  // Insight cards
+  const cards = [
+    { label:'Traffic Density', val: level, badge: levelCls[level]||'badge-muted' },
+    { label:'Dominant Type', val: dominant?dominant[0]:'N/A', badge:'badge-accent' },
+    { label:'Total Detected', val: total, badge:'badge-info' },
+    { label:'Peak Active', val: peakA ?? 'N/A', badge:'badge-muted' },
+  ];
+  document.getElementById('insight-cards').innerHTML = cards.map((c,i) => `
+    <div class="stat-card animate-fade-in delay-${i+1}">
+      <div class="stat-card-top">
+        <span class="stat-card-label">${c.label}</span>
+      </div>
+      <div class="stat-card-value" style="font-size:1.5rem">${c.val}</div>
+      <div class="stat-card-footer"><span class="badge ${c.badge}">${c.label}</span></div>
+    </div>`).join('');
+
+  // Density insight
+  const densityDesc = {
+    LOW:    'Traffic is light. Fewer than 8 vehicles active simultaneously.',
+    MEDIUM: 'Moderate traffic. Between 9–20 vehicles active at once.',
+    HIGH:   'High traffic load. 21–35 vehicles active simultaneously.',
+    SEVERE: 'Severe congestion. More than 35 vehicles active simultaneously.',
+  };
+  document.getElementById('density-insight').innerHTML = `
+    <div style="display:flex;align-items:center;gap:var(--space-4);padding:var(--space-4) 0">
+      <div style="width:56px;height:56px;border-radius:50%;background:${level==='LOW'?'var(--success-bg)':level==='MEDIUM'?'var(--warning-bg)':'var(--error-bg)'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <span style="font-size:1.5rem">${level==='LOW'?'🟢':level==='MEDIUM'?'🟡':'🔴'}</span>
+      </div>
+      <div>
+        <div class="font-semibold" style="margin-bottom:4px">${level} Traffic</div>
+        <p class="text-sm text-muted" style="line-height:1.6">${densityDesc[level] || 'Traffic density level determined from tracked vehicle counts.'}</p>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      ${statRow('Average Active', avgA != null ? avgA.toFixed(2) + ' vehicles' : 'N/A')}
+      ${statRow('Peak Active', peakA != null ? peakA + ' vehicles' : 'N/A')}
+      ${statRow('Active at End', active + ' vehicles')}
+    </div>`;
+
+  // Flow insight
+  const dc = report.direction_counts || {};
+  const up = dc.UP ?? 0, down = dc.DOWN ?? 0, unk = dc.UNKNOWN ?? total;
+  const hasDir = (up > 0 || down > 0);
+  document.getElementById('flow-insight').innerHTML = hasDir ? `
+    <div style="display:flex;flex-direction:column;gap:8px">
+      ${statRow('Going Up (Away)', up + ' vehicles')}
+      ${statRow('Going Down (Toward)', down + ' vehicles')}
+      ${statRow('Direction Unknown', unk + ' vehicles')}
+      <p class="text-xs text-muted" style="margin-top:4px;line-height:1.5">Direction is estimated from vertical motion trajectory. No counting line is used.</p>
+    </div>` : `
+    <div class="empty-state" style="padding:var(--space-6)">
+      <div class="empty-state-desc">Insufficient motion data to determine vehicle flow direction. Direction shown as Unknown for all vehicles.</div>
+    </div>`;
+
+  // Detection summary
+  document.getElementById('detection-summary').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:8px">
+      ${statRow('Total Unique Vehicles', total)}
+      ${statRow('Detection Model', report.model_source || 'UVH-26 YOLOv11-S')}
+      ${statRow('Tracking Algorithm', 'ByteTrack')}
+      ${statRow('Counting Method', 'Track-identity based (no counting line)')}
+      ${statRow('Video Duration', formatDuration(report.video_duration))}
+      ${statRow('Processing Time', formatDuration(report.processing_time_seconds))}
+      ${statRow('Frames Processed', report.frames_processed ?? 'N/A')}
+    </div>`;
+
+  // Key metrics
+  document.getElementById('key-metrics').innerHTML = `
+    ${statRow('Total Vehicles', total)}
+    ${statRow('Active (End)', active)}
+    ${statRow('Video Duration', formatDuration(report.video_duration))}
+    ${statRow('Avg Vehicles/Min', report.video_duration > 0 ? (total / (report.video_duration / 60)).toFixed(1) : 'N/A')}`;
+
+  // Vehicle intelligence
+  document.getElementById('vehicle-intel').innerHTML = `
+    ${statRow('Dominant Category', dominant ? dominant[0] + (dominantPct ? ` (${dominantPct}%)` : '') : 'N/A')}
+    ${statRow('Cars', car + (total>0 ? ' ('+((car/total)*100).toFixed(0)+'%)' : ''))}
+    ${statRow('Motorcycles', moto + (total>0 ? ' ('+((moto/total)*100).toFixed(0)+'%)' : ''))}
+    ${statRow('Autos', auto + (total>0 ? ' ('+((auto/total)*100).toFixed(0)+'%)' : ''))}
+    ${statRow('Buses', bus + (total>0 ? ' ('+((bus/total)*100).toFixed(0)+'%)' : ''))}
+    ${statRow('Trucks', truck + (total>0 ? ' ('+((truck/total)*100).toFixed(0)+'%)' : ''))}`;
+
+  // Speed intelligence
+  const sp = report.speed || {};
+  if (sp.average_pixels_per_second > 0) {
+    document.getElementById('speed-intel-card').style.display = 'block';
+    document.getElementById('speed-intel').innerHTML = `
+      ${statRow('Relative Speed (px/s)', sp.average_pixels_per_second?.toFixed(1) ?? 'N/A')}
+      ${statRow('Calibrated km/h', sp.average_kmh != null ? sp.average_kmh.toFixed(1) + ' km/h' : 'N/A — camera not calibrated')}
+      <p class="text-xs text-muted" style="margin-top:4px;line-height:1.5">Physical km/h requires camera calibration (METERS_PER_PIXEL configuration). Pixel-per-second is relative motion only.</p>`;
+  }
+}
+</script>
+</body>
+</html>
