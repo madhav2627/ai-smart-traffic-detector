@@ -348,17 +348,17 @@ def run_inference_on_frame(detector, frame, conf_thresh=0.20, imgsz=512):
                 })
 
     elif engine_type == "onnx":
-        # Preprocess frame for ONNX (512x512 RGB normalized)
-        resized = cv2.resize(frame, (imgsz, imgsz))
+        inp_shape = model.get_inputs()[0].shape
+        in_h = inp_shape[2] if len(inp_shape) > 2 and isinstance(inp_shape[2], int) else 640
+        in_w = inp_shape[3] if len(inp_shape) > 3 and isinstance(inp_shape[3], int) else 640
+        resized = cv2.resize(frame, (in_w, in_h))
         rgb = cv2.cvtColor(resized, cv2.COLOR_BGR2RGB).astype(np.float32) / 255.0
-        inp = np.transpose(rgb, (2, 0, 1))[np.newaxis, ...] # (1, 3, 512, 512)
+        inp = np.transpose(rgb, (2, 0, 1))[np.newaxis, ...] # (1, 3, in_h, in_w)
         input_name = model.get_inputs()[0].name
-        outs = model.run(None, {input_name: inp})[0] # (1, 18, 5376)
-        # Parse YOLOv11 output
-        # Output shape is (1, 4 + num_classes, num_boxes)
-        preds = outs[0] # (18, 5376)
-        boxes_raw = preds[:4, :].T # (5376, 4) in cx, cy, w, h
-        scores_raw = preds[4:, :].T # (5376, 14)
+        outs = model.run(None, {input_name: inp})[0] # (1, 18, 8400)
+        preds = outs[0] # (18, 8400)
+        boxes_raw = preds[:4, :].T # (8400, 4) in cx, cy, w, h
+        scores_raw = preds[4:, :].T # (8400, 14)
         max_scores = np.max(scores_raw, axis=1)
         max_classes = np.argmax(scores_raw, axis=1)
 
@@ -367,8 +367,8 @@ def run_inference_on_frame(detector, frame, conf_thresh=0.20, imgsz=512):
         filtered_scores = max_scores[mask]
         filtered_classes = max_classes[mask]
 
-        scale_x = w / float(imgsz)
-        scale_y = h / float(imgsz)
+        scale_x = w / float(in_w)
+        scale_y = h / float(in_h)
 
         # Mapping of UVH-26 14 classes in alphabetical order
         UVH26_NAMES = [
