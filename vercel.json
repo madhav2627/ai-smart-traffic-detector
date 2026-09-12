@@ -3,19 +3,32 @@
   "version": 2,
   "cleanUrls": true,
   "trailingSlash": false,
-  "outputDirectory": "frontend",
+  "functions": {
+    "api/index.py": {
+      "maxDuration": 60,
+      "memory": 1024
+    }
+  },
   "rewrites": [
-    { "source": "/login", "destination": "/login.html" },
-    { "source": "/register", "destination": "/register.html" },
-    { "source": "/dashboard", "destination": "/pages/dashboard.html" },
-    { "source": "/surveillance", "destination": "/pages/surveillance.html" },
-    { "source": "/cameras", "destination": "/pages/cameras.html" },
-    { "source": "/live", "destination": "/pages/live.html" },
-    { "source": "/analytics", "destination": "/pages/analytics.html" },
-    { "source": "/traffic-ai", "destination": "/pages/traffic-ai.html" },
-    { "source": "/history", "destination": "/pages/history.html" },
-    { "source": "/reports", "destination": "/pages/reports.html" },
-    { "source": "/settings", "destination": "/pages/settings.html" }
+    { "source": "/health", "destination": "/api/index.py" },
+    { "source": "/api/(.*)", "destination": "/api/index.py" },
+    { "source": "/", "destination": "/frontend/index.html" },
+    { "source": "/login", "destination": "/frontend/login.html" },
+    { "source": "/register", "destination": "/frontend/register.html" },
+    { "source": "/dashboard", "destination": "/frontend/pages/dashboard.html" },
+    { "source": "/surveillance", "destination": "/frontend/pages/surveillance.html" },
+    { "source": "/cameras", "destination": "/frontend/pages/cameras.html" },
+    { "source": "/live", "destination": "/frontend/pages/live.html" },
+    { "source": "/analytics", "destination": "/frontend/pages/analytics.html" },
+    { "source": "/traffic-ai", "destination": "/frontend/pages/traffic-ai.html" },
+    { "source": "/history", "destination": "/frontend/pages/history.html" },
+    { "source": "/reports", "destination": "/frontend/pages/reports.html" },
+    { "source": "/settings", "destination": "/frontend/pages/settings.html" },
+    { "source": "/css/(.*)", "destination": "/frontend/css/$1" },
+    { "source": "/js/(.*)", "destination": "/frontend/js/$1" },
+    { "source": "/assets/(.*)", "destination": "/frontend/assets/$1" },
+    { "source": "/pages/(.*)", "destination": "/frontend/pages/$1" },
+    { "source": "/(.*\\.(png|jpg|jpeg|gif|svg|ico|css|js|woff|woff2|ttf))", "destination": "/frontend/$1" }
   ],
   "headers": [
     {

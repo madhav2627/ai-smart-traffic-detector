@@ -64,13 +64,13 @@
 
       <div class="stat-card animate-fade-in delay-4">
         <div class="stat-card-top">
-          <span class="stat-card-label">Cloud Dependency</span>
+          <span class="stat-card-label">Deployment</span>
           <div class="stat-card-icon" style="background:rgba(16,185,129,0.1)">
             <svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2" style="width:16px;height:16px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           </div>
         </div>
-        <div class="stat-card-value" style="font-size:1.15rem;padding-top:4px">None (Local)</div>
-        <div class="stat-card-footer">100% Private Processing</div>
+        <div class="stat-card-value" style="font-size:1.15rem;padding-top:4px">Online (Vercel)</div>
+        <div class="stat-card-footer">Secure Cloud Processing</div>
       </div>
     </div>
 
@@ -137,7 +137,7 @@
 
       <div class="form-group">
         <label class="form-label" for="form-cam-url">Stream / Connection URL</label>
-        <input class="form-input font-mono text-sm" type="text" id="form-cam-url" placeholder="rtsp://192.168.1.100:554/stream or 0 for webcam" required>
+        <input class="form-input font-mono text-sm" type="text" id="form-cam-url" placeholder="rtsp://stream.domain.com:554/live or 0 for webcam" required>
         <span class="form-hint" id="form-url-hint">For webcam: enter device index (0, 1). For RTSP: rtsp://&lt;ip&gt;:&lt;port&gt;/path</span>
       </div>
 
@@ -372,11 +372,11 @@ function setupModals() {
       input.placeholder = '0';
       hint.textContent = 'Enter local device index (0 for default webcam, 1 for second webcam).';
     } else if (this.value === 'RTSP') {
-      input.placeholder = 'rtsp://192.168.1.100:554/stream';
-      hint.textContent = 'Enter valid RTSP URL from your IP camera or NVR.';
+      input.placeholder = 'rtsp://stream.domain.com:554/live';
+      hint.textContent = 'Enter reachable RTSP stream URL (private 192.168.x.x addresses require public secure gateway to connect from cloud).';
     } else {
-      input.placeholder = 'http://192.168.1.100:8080/video';
-      hint.textContent = 'Enter local stream URL.';
+      input.placeholder = 'https://stream.domain.com/video.m3u8';
+      hint.textContent = 'Enter public HTTP/HLS live video stream URL.';
     }
   });
 

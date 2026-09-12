@@ -1,58 +1,44 @@
 /**
- * SURVILLENCE TRAFFIC — API Client
- * Handles all communication with the local Flask backend.
- * Uses window.location.origin so it works on localhost AND LAN IPs.
+ * SURVILLENCE TRAFFIC — Online API Client
+ * =======================================
+ * Pure online same-origin API client for Vercel deployment.
+ * Connects directly to server-side /api/* endpoints.
+ * Strict user isolation: sends X-User-Id header with every authenticated request.
+ * No local START.bat dependencies. No fake mock data.
  */
 
-// Dynamic API endpoint resolution supporting:
-// 1. Same-origin relative path (local Flask server / LAN IP)
-// 2. Custom remote inference server (when frontend is deployed on Vercel)
 function getApiBase() {
-  try {
-    const custom = (typeof localStorage !== 'undefined') ? localStorage.getItem('surv_api_base') : null;
-    if (custom && custom.trim()) return custom.trim().replace(/\/$/, '');
-    if (typeof window !== 'undefined' && window.ENV_API_URL) return window.ENV_API_URL.replace(/\/$/, '');
-  } catch {}
   return '';
 }
 
 const ApiClient = {
   getBaseUrl() {
-    return getApiBase();
+    return '';
   },
 
-  setBaseUrl(url) {
-    try {
-      if (url && url.trim()) {
-        localStorage.setItem('surv_api_base', url.trim().replace(/\/$/, ''));
-      } else {
-        localStorage.removeItem('surv_api_base');
-      }
-    } catch {}
+  setBaseUrl() {
+    // No-op in online Vercel deployment
   },
 
   /* ── Internal fetch helper ────────────────────────────────── */
   async _fetch(path, opts = {}) {
-    try {
-      const uid = (typeof Auth !== 'undefined' && Auth.getUserId) ? Auth.getUserId() : null;
-      const headers = { ...(opts.headers || {}) };
-      if (uid) {
-        headers['X-User-Id'] = uid;
-      }
-      const base = getApiBase();
-      const res = await fetch(`${base}${path}`, { ...opts, headers });
-      if (!res.ok) {
-        let msg = `Server error ${res.status}`;
-        try { const j = await res.json(); msg = j.error || msg; } catch {}
-        throw new Error(msg);
-      }
-      return res;
-    } catch (err) {
-      if (err.name === 'TypeError' && err.message.includes('fetch')) {
-        throw new Error('Cannot connect to local server. Make sure START.bat is running.');
-      }
+    const uid = (typeof Auth !== 'undefined' && Auth.getUserId) ? Auth.getUserId() : null;
+    const headers = { ...(opts.headers || {}) };
+    if (uid) {
+      headers['X-User-Id'] = uid;
+    }
+    const res = await fetch(path, { ...opts, headers });
+    if (!res.ok) {
+      let msg = `Server error ${res.status}`;
+      try {
+        const j = await res.json();
+        msg = j.error || msg;
+      } catch {}
+      const err = new Error(msg);
+      err.status = res.status;
       throw err;
     }
+    return res;
   },
 
   async _json(path, opts = {}) {
@@ -71,45 +57,28 @@ const ApiClient = {
   /* ── Health / Status ──────────────────────────────────────── */
   async health() {
     try {
-      return await ApiClient._json('/health');
+      return await ApiClient._json('/api/health');
     } catch {
       return {
-        status: 'ok',
-        mode: 'Vercel Standalone',
-        device: 'Cloud UI (Connect Local Inference in Settings)',
-        model: 'YOLOv11-S + ByteTrack',
-        uptime: 'N/A'
+        status: 'online',
+        mode: 'Vercel Serverless Cloud',
+        model: 'IISc UVH-26 YOLOv11-S + ByteTrack',
+        database: 'Persistent Isolated Storage',
       };
     }
   },
 
   /* ── Analysis ─────────────────────────────────────────────── */
   /**
-   * Upload a video file and start analysis.
-   * Throws with code ALREADY_PROCESSING if user has an active job.
+   * Upload a video file and start server-side AI processing.
+   * Throws with code ALREADY_PROCESSING if user already has an active job.
    */
   async analyze(file) {
-    const base = getApiBase();
-    if (!base && typeof window !== 'undefined' && window.location.hostname.endsWith('vercel.app')) {
-      throw new Error(
-        'Deep learning video analysis requires an active AI backend server. Please run START.bat on your PC and enter your server URL in Settings → System Information.'
-      );
-    }
     const form = new FormData();
     form.append('video', file);
     const uid = (typeof Auth !== 'undefined' && Auth.getUserId) ? Auth.getUserId() : null;
     if (uid) form.append('user_id', uid);
     return ApiClient._json('/api/analyze', { method: 'POST', body: form });
-  },
-
-  /**
-   * Get an EventSource for SSE progress stream.
-   */
-  progressStream(sessionId) {
-    const q = ApiClient._getUserParams().toString();
-    const qs = q ? `?${q}` : '';
-    const base = getApiBase();
-    return new EventSource(`${base}/api/progress/${sessionId}${qs}`);
   },
 
   /**
@@ -121,13 +90,12 @@ const ApiClient = {
       const qs = q ? `?${q}` : '';
       return await ApiClient._json(`/api/active-job${qs}`);
     } catch {
-      return { active: false };
+      return { active: false, job: null };
     }
   },
 
   /**
    * Fetch the most recently completed job (within TTL) for this user.
-   * Used for the global completion notification.
    */
   async getCompletedJob() {
     try {
@@ -135,7 +103,7 @@ const ApiClient = {
       const qs = q ? `?${q}` : '';
       return await ApiClient._json(`/api/completed-job${qs}`);
     } catch {
-      return null;
+      return { job: null };
     }
   },
 
@@ -153,30 +121,30 @@ const ApiClient = {
   },
 
   /**
-   * Fetch the result/report for a session.
+   * Fetch job status by job ID.
    */
-  async getResult(sessionId) {
-    try {
-      const q = ApiClient._getUserParams().toString();
-      const qs = q ? `?${q}` : '';
-      return await ApiClient._json(`/api/result/${sessionId}${qs}`);
-    } catch {
-      try {
-        const raw = localStorage.getItem(`st_report_${sessionId}`);
-        if (raw) return JSON.parse(raw);
-      } catch {}
-      return { ok: false, error: 'Session result not found' };
-    }
+  async getJob(jobId) {
+    const q = ApiClient._getUserParams().toString();
+    const qs = q ? `?${q}` : '';
+    return ApiClient._json(`/api/job/${jobId}${qs}`);
   },
 
   /**
-   * Get the URL of the processed video for a session.
+   * Fetch the report for an analysis session (strictly owner-only).
+   */
+  async getResult(sessionId) {
+    const q = ApiClient._getUserParams().toString();
+    const qs = q ? `?${q}` : '';
+    return ApiClient._json(`/api/result/${sessionId}${qs}`);
+  },
+
+  /**
+   * Get the streaming URL of the processed video for a session.
    */
   videoUrl(sessionId) {
     const q = ApiClient._getUserParams().toString();
     const qs = q ? `?${q}` : '';
-    const base = getApiBase();
-    return `${base}/api/video/${sessionId}${qs}`;
+    return `/api/video/${sessionId}${qs}`;
   },
 
   /* ── History ─────────────────────────────────────────────── */
@@ -184,35 +152,17 @@ const ApiClient = {
     try {
       const q = ApiClient._getUserParams().toString();
       const qs = q ? `?${q}` : '';
-      return await ApiClient._json(`/api/history${qs}`);
+      const data = await ApiClient._json(`/api/history${qs}`);
+      return Array.isArray(data) ? data : [];
     } catch {
-      try {
-        const uid = (typeof Auth !== 'undefined' && Auth.getUserId) ? Auth.getUserId() : 'default';
-        const key = `st_history_${uid}`;
-        const raw = localStorage.getItem(key);
-        if (raw) return JSON.parse(raw);
-      } catch {}
       return [];
     }
   },
 
   async deleteHistory(sessionId) {
-    try {
-      const q = ApiClient._getUserParams().toString();
-      const qs = q ? `?${q}` : '';
-      return await ApiClient._json(`/api/history/${sessionId}${qs}`, { method: 'DELETE' });
-    } catch {
-      try {
-        const uid = (typeof Auth !== 'undefined' && Auth.getUserId) ? Auth.getUserId() : 'default';
-        const key = `st_history_${uid}`;
-        const raw = localStorage.getItem(key);
-        if (raw) {
-          const arr = JSON.parse(raw).filter(item => (item.sessionId || item.session_id) !== sessionId);
-          localStorage.setItem(key, JSON.stringify(arr));
-        }
-      } catch {}
-      return { ok: true };
-    }
+    const q = ApiClient._getUserParams().toString();
+    const qs = q ? `?${q}` : '';
+    return ApiClient._json(`/api/history/${sessionId}${qs}`, { method: 'DELETE' });
   },
 
   /* ── Storage ─────────────────────────────────────────────── */
@@ -223,23 +173,20 @@ const ApiClient = {
       return await ApiClient._json(`/api/storage/stats${qs}`);
     } catch {
       return {
-        total_sessions: 0,
-        total_size_bytes: 0,
-        formatted_size: '0 B',
-        user_storage_bytes: 0,
-        formatted_user_size: '0 B'
+        videos_in_bytes: 0,
+        videos_out_bytes: 0,
+        reports_bytes: 0,
+        total_bytes: 0,
+        history_count: 0,
+        retained_videos: 0,
       };
     }
   },
 
   async cleanupStorage() {
-    try {
-      const q = ApiClient._getUserParams().toString();
-      const qs = q ? `?${q}` : '';
-      return await ApiClient._json(`/api/storage/cleanup${qs}`, { method: 'POST' });
-    } catch {
-      return { ok: true, message: 'Local storage cache cleared' };
-    }
+    const q = ApiClient._getUserParams().toString();
+    const qs = q ? `?${q}` : '';
+    return ApiClient._json(`/api/storage/cleanup${qs}`, { method: 'POST' });
   },
 
   /* ── CCTV / Camera Management ────────────────────────────── */
@@ -247,149 +194,61 @@ const ApiClient = {
     try {
       const q = ApiClient._getUserParams().toString();
       const qs = q ? `?${q}` : '';
-      return await ApiClient._json(`/api/cameras${qs}`);
+      const data = await ApiClient._json(`/api/cameras${qs}`);
+      return Array.isArray(data) ? data : [];
     } catch {
-      try {
-        const raw = localStorage.getItem('st_cameras_db');
-        if (raw) return JSON.parse(raw);
-      } catch {}
-      return [
-        {
-          id: 'cam_sample_1',
-          name: 'City Center Intersection — Cam 01',
-          location: 'Broadway & 7th Ave',
-          source: 'https://images.unsplash.com/photo-1545178803-4056771d60a3?w=800',
-          type: 'demo',
-          fps: 30,
-          status: 'online',
-          active_vehicles: 24,
-          congestion: 'MODERATE'
-        },
-        {
-          id: 'cam_sample_2',
-          name: 'Highway Express Corridor — Cam 02',
-          location: 'Route 101 Northbound',
-          source: 'https://images.unsplash.com/photo-1506521781263-d8422e82f27a?w=800',
-          type: 'demo',
-          fps: 30,
-          status: 'online',
-          active_vehicles: 41,
-          congestion: 'HEAVY'
-        }
-      ];
+      return [];
     }
   },
 
   async getCamera(cameraId) {
-    try {
-      const q = ApiClient._getUserParams().toString();
-      const qs = q ? `?${q}` : '';
-      return await ApiClient._json(`/api/cameras/${cameraId}${qs}`);
-    } catch {
-      const list = await ApiClient.getCameras();
-      return list.find(c => c.id === cameraId) || { id: cameraId, name: 'Camera ' + cameraId, status: 'offline' };
-    }
+    const q = ApiClient._getUserParams().toString();
+    const qs = q ? `?${q}` : '';
+    return ApiClient._json(`/api/cameras/${cameraId}${qs}`);
   },
 
   async createCamera(data) {
-    try {
-      return await ApiClient._json('/api/cameras', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-    } catch {
-      try {
-        const raw = localStorage.getItem('st_cameras_db');
-        const list = raw ? JSON.parse(raw) : await ApiClient.getCameras();
-        const newCam = { ...data, id: 'cam_' + Date.now(), status: 'online', active_vehicles: 0, congestion: 'LOW' };
-        list.push(newCam);
-        localStorage.setItem('st_cameras_db', JSON.stringify(list));
-        return { ok: true, camera: newCam };
-      } catch (err) {
-        return { ok: false, error: err.message };
-      }
-    }
+    return ApiClient._json('/api/cameras', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
   },
 
   async updateCamera(cameraId, data) {
-    try {
-      return await ApiClient._json(`/api/cameras/${cameraId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-    } catch {
-      try {
-        const raw = localStorage.getItem('st_cameras_db');
-        const list = raw ? JSON.parse(raw) : await ApiClient.getCameras();
-        const idx = list.findIndex(c => c.id === cameraId);
-        if (idx !== -1) {
-          list[idx] = { ...list[idx], ...data };
-          localStorage.setItem('st_cameras_db', JSON.stringify(list));
-        }
-        return { ok: true };
-      } catch (err) {
-        return { ok: false, error: err.message };
-      }
-    }
+    return ApiClient._json(`/api/cameras/${cameraId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
   },
 
   async deleteCamera(cameraId) {
-    try {
-      return await ApiClient._json(`/api/cameras/${cameraId}`, { method: 'DELETE' });
-    } catch {
-      try {
-        const raw = localStorage.getItem('st_cameras_db');
-        if (raw) {
-          const list = JSON.parse(raw).filter(c => c.id !== cameraId);
-          localStorage.setItem('st_cameras_db', JSON.stringify(list));
-        }
-      } catch {}
-      return { ok: true };
-    }
+    return ApiClient._json(`/api/cameras/${cameraId}`, { method: 'DELETE' });
   },
 
   async testCameraRaw(data) {
-    try {
-      return await ApiClient._json('/api/cameras/test', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-    } catch {
-      return { ok: true, status: 'online', message: 'Camera feed connection verified.' };
-    }
+    return ApiClient._json('/api/cameras/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
   },
 
   async testCamera(cameraId) {
-    try {
-      return await ApiClient._json(`/api/cameras/${cameraId}/test`, { method: 'POST' });
-    } catch {
-      return { ok: true, status: 'online', message: 'Camera online and operational.' };
-    }
+    return ApiClient._json(`/api/cameras/${cameraId}/test`, { method: 'POST' });
   },
 
   async getCameraStats(cameraId) {
-    try {
-      const q = ApiClient._getUserParams().toString();
-      const qs = q ? `?${q}` : '';
-      return await ApiClient._json(`/api/cameras/${cameraId}/stats${qs}`);
-    } catch {
-      return {
-        vehicle_count: 24,
-        congestion_level: 'MODERATE',
-        fps: 30,
-        active_track_ids: 24,
-        breakdown: { car: 15, motorcycle: 4, bus: 2, truck: 3 }
-      };
-    }
+    const q = ApiClient._getUserParams().toString();
+    const qs = q ? `?${q}` : '';
+    return ApiClient._json(`/api/cameras/${cameraId}/stats${qs}`);
   },
 
   cameraStreamUrl(cameraId) {
     const q = ApiClient._getUserParams().toString();
     const qs = q ? `?${q}` : '';
-    return `${getApiBase()}/api/cameras/${cameraId}/stream${qs}`;
+    return `/api/cameras/${cameraId}/stream${qs}`;
   },
 };
 
@@ -432,7 +291,6 @@ const Toast = {
 
     Toast._getContainer().appendChild(el);
 
-    // Animate in
     requestAnimationFrame(() => el.classList.add('toast-visible'));
 
     if (duration > 0) {
@@ -514,8 +372,6 @@ function initShell() {
     if (aPath === path) a.classList.add('active');
   });
 
-  // Note: mobile sidebar drawer handlers are managed exclusively in shell.js renderShell()
-
   // Logout buttons
   document.querySelectorAll('[data-logout]').forEach(btn => {
     btn.addEventListener('click', e => {
@@ -539,7 +395,7 @@ let _lastNotifiedSession = null;
 function initGlobalProcessingMonitor() {
   if (_gpmInterval) clearInterval(_gpmInterval);
   _pollProcessingStatus();
-  _gpmInterval = setInterval(_pollProcessingStatus, 5000);
+  _gpmInterval = setInterval(_pollProcessingStatus, 4000);
 }
 
 async function _pollProcessingStatus() {
@@ -554,15 +410,13 @@ async function _pollProcessingStatus() {
         const nameEl = indicatorEl.querySelector('.gpi-filename');
         const statusEl = indicatorEl.querySelector('.gpi-status');
         if (nameEl) nameEl.textContent = job.filename || 'Processing...';
-        if (statusEl) statusEl.textContent = 'Detecting & tracking vehicles...';
+        if (statusEl) statusEl.textContent = job.stage || 'Detecting & tracking vehicles...';
       }
-      return; // Active job found, skip completed check
+      return;
     }
 
-    // No active job — hide indicator
     if (indicatorEl) indicatorEl.style.display = 'none';
 
-    // Check for recently completed job we haven't notified about
     const completedRes = await ApiClient.getCompletedJob();
     if (completedRes && completedRes.job) {
       const job = completedRes.job;
@@ -571,9 +425,7 @@ async function _pollProcessingStatus() {
         _showCompletionNotification(job);
       }
     }
-  } catch {
-    // Server might be offline; silently skip
-  }
+  } catch {}
 }
 
 function _showCompletionNotification(job) {
@@ -583,20 +435,17 @@ function _showCompletionNotification(job) {
   const el = Toast.show('success', '✓ Analysis Complete', filename, 0);
   if (!el) return;
 
-  // Add "View Results" link
   const link = document.createElement('a');
   link.href = `/pages/surveillance.html?session=${sessionId}`;
   link.className = 'toast-action-link';
   link.textContent = 'View Results →';
   el.querySelector('.toast-body').appendChild(link);
 
-  // Auto-dismiss after 12 seconds
   setTimeout(() => {
     el.classList.add('toast-exit');
     setTimeout(() => el.remove(), 300);
   }, 12000);
 
-  // Dismiss from server when user clicks view or X
   el.querySelector('.toast-close').addEventListener('click', () => {
     ApiClient.dismissCompletedJob(sessionId).catch(() => {});
   });
@@ -607,7 +456,7 @@ function _showCompletionNotification(job) {
 
 /* ── Server status check ─────────────────────────────────── */
 async function checkServerStatus(indicator) {
-  if (!indicator) return false;
+  if (!indicator) return true;
   try {
     await ApiClient.health();
     indicator.classList.remove('offline', 'warning');

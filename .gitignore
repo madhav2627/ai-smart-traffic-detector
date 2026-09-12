@@ -24,6 +24,10 @@ storage/reports/*
 storage/users.db
 storage/*.db
 
+# Local development scripts (not deployed to Vercel)
+START.bat
+backend/start.bat
+
 # IDE & OS files
 .DS_Store
 Thumbs.db

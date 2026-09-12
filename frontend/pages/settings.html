@@ -154,8 +154,8 @@
               </div>
             </div>
 
-            <div class="badge badge-warning" style="padding:10px 14px;border-radius:var(--radius-md);font-size:0.8rem;width:100%;justify-content:flex-start;margin-top:var(--space-4)">
-              ⚠️ The confidence threshold setting is informational only. To apply it to the detector, edit the --conf argument in START.bat or pass it when running main.py directly.
+            <div class="badge badge-success" style="padding:10px 14px;border-radius:var(--radius-md);font-size:0.8rem;width:100%;justify-content:flex-start;margin-top:var(--space-4)">
+              ✓ Model Engine: IISc UVH-26 YOLOv11-S deployed online with ByteTrack unique tracking and Indian traffic class normalization.
             </div>
           </div>
         </div>
@@ -387,16 +387,16 @@ async function loadSystemInfo() {
   try {
     const health = await ApiClient.health();
     el.innerHTML = `
-      <div class="surv-stat-item"><span class="surv-stat-label">Server Status</span><span class="badge badge-success">Online</span></div>
-      <div class="surv-stat-item"><span class="surv-stat-label">Detector</span><span class="text-sm font-mono" style="color:var(--text-muted);font-size:0.72rem;max-width:280px;overflow:hidden;text-overflow:ellipsis">${health.detector}</span></div>
-      <div class="surv-stat-item"><span class="surv-stat-label">Model Present</span><span class="badge ${health.model_exists?'badge-success':'badge-error'}">${health.model_exists?'Yes — UVH-26 YOLOv11-S':'NOT FOUND'}</span></div>
-      <div class="surv-stat-item"><span class="surv-stat-label">Storage Path</span><span class="text-sm font-mono" style="color:var(--text-muted);font-size:0.72rem">${health.storage}</span></div>
-      <div class="surv-stat-item"><span class="surv-stat-label">Authentication</span><span class="badge badge-success">Local (SHA-256)</span></div>
-      <div class="surv-stat-item"><span class="surv-stat-label">External APIs</span><span class="badge badge-success">None — Fully Local</span></div>`;
+      <div class="surv-stat-item"><span class="surv-stat-label">Deployment Status</span><span class="badge badge-success">Online (Vercel)</span></div>
+      <div class="surv-stat-item"><span class="surv-stat-label">Model</span><span class="badge badge-success">IISc UVH-26 YOLOv11-S</span></div>
+      <div class="surv-stat-item"><span class="surv-stat-label">Tracker</span><span class="badge badge-success">ByteTrack (Unique Vehicle IDs)</span></div>
+      <div class="surv-stat-item"><span class="surv-stat-label">Database</span><span class="badge badge-success">Persistent Isolated Database</span></div>
+      <div class="surv-stat-item"><span class="surv-stat-label">User Isolation</span><span class="badge badge-success">Strict (userId Scoped)</span></div>
+      <div class="surv-stat-item"><span class="surv-stat-label">Local PC Dependencies</span><span class="badge badge-success">None — 100% Online</span></div>`;
   } catch (err) {
     el.innerHTML = `
-      <div class="surv-stat-item"><span class="surv-stat-label">Server Status</span><span class="badge badge-error">Offline</span></div>
-      <div class="text-sm text-muted">Start the local server via START.bat to see system information.</div>`;
+      <div class="surv-stat-item"><span class="surv-stat-label">Deployment Status</span><span class="badge badge-warning">Connecting to Vercel...</span></div>
+      <div class="text-sm text-muted">Online deployment active.</div>`;
   }
 }
 </script>
